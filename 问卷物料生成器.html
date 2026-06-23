@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>問卷物料模板生成器</title>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:30px 20px}
+h1{color:#1e293b;margin-bottom:6px;font-size:26px;font-weight:700}
+.subtitle{color:#64748b;margin-bottom:28px;font-size:14px}
+
+.drop-row{display:flex;gap:20px;width:100%;max-width:960px;margin-bottom:8px;flex-wrap:wrap;justify-content:center}
+.drop-zone{flex:1;min-width:300px;height:200px;border:3px dashed #94a3b8;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;cursor:pointer;transition:all .3s ease;position:relative;box-shadow:0 4px 24px rgba(0,0,0,.04)}
+.drop-zone:hover,.drop-zone.dragover{border-color:#6366f1;background:linear-gradient(135deg,#eef2ff,#e0e7ff);transform:translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.12)}
+.drop-zone.loaded{border-color:#10b981;background:linear-gradient(135deg,#ecfdf5,#d1fae5);border-style:solid}
+.drop-zone svg{width:44px;height:44px;color:#94a3b8;margin-bottom:10px;transition:color .3s}
+.drop-zone:hover svg{color:#6366f1}
+.drop-zone.loaded svg{color:#10b981}
+.drop-zone .label{font-size:15px;color:#475569;font-weight:500;text-align:center;padding:0 12px}
+.drop-zone .hint{font-size:12px;color:#94a3b8;margin-top:6px}
+.drop-zone .loaded-info{font-size:13px;color:#059669;font-weight:600;margin-top:8px}
+.drop-zone input[type="file"]{display:none}
+.drop-zone .zone-tag{position:absolute;top:12px;left:16px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;letter-spacing:.5px}
+.tag-questionnaire{background:#eef2ff;color:#6366f1}
+.tag-service{background:#fef3c7;color:#d97706}
+.tag-vlookup{background:#dcfce7;color:#16a34a}
+
+.card{width:100%;max-width:920px;margin-top:16px;background:#fff;border-radius:14px;padding:22px 24px;box-shadow:0 2px 12px rgba(0,0,0,.05);display:none}
+.card.visible{display:block}
+
+.status-inner{display:flex;align-items:center;gap:12px}
+.status-inner .icon{font-size:22px}
+.status-inner .text{font-size:14px;color:#334155;line-height:1.6}
+
+.stats-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.stat-card{background:linear-gradient(135deg,#fff,#f8fafc);border-radius:14px;padding:18px 28px;text-align:center;min-width:130px;border:1px solid #e2e8f0}
+.stat-value{font-size:32px;font-weight:800;color:#6366f1}
+.stat-label{font-size:12px;color:#94a3b8;margin-top:4px;font-weight:500}
+
+h3.section-title{font-size:15px;color:#1e293b;margin-bottom:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+
+.mapping-table{width:100%;border-collapse:collapse;font-size:13px}
+.mapping-table th{background:#f1f5f9;padding:9px 14px;text-align:left;border-bottom:2px solid #e2e8f0;color:#475569;font-weight:600}
+.mapping-table td{padding:8px 14px;border-bottom:1px solid #f1f5f9;color:#334155}
+.mapping-table tr:hover td{background:#f8fafc}
+.mapping-table .ok{color:#10b981;font-weight:600}
+.mapping-table .fail{color:#ef4444;font-size:12px}
+.mapping-table .source-qs{background:#eef2ff}
+.mapping-table .source-sv{background:#fef3c7}
+
+.scroll-wrapper{max-height:420px;overflow:auto;border:1px solid #e2e8f0;border-radius:10px}
+.preview-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap}
+.preview-table th{background:#6366f1;color:#fff;padding:9px 12px;text-align:center;position:sticky;top:0;font-weight:500;z-index:1}
+.preview-table td{padding:7px 12px;border-bottom:1px solid #f1f5f9;text-align:center;color:#374151}
+.preview-table tr:nth-child(even) td{background:#f8fafc}
+.preview-table .num-cell{font-weight:700;color:#6366f1}
+.preview-table .num-cell-sv{font-weight:700;color:#d97706}
+.preview-table .empty-cell{color:#cbd5e1}
+
+.btn-row{width:100%;max-width:920px;margin-top:20px;display:none;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-row.visible{display:flex}
+.btn{padding:13px 36px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,.35)}
+.btn-secondary{background:#fff;color:#6366f1;border:2px solid #6366f1}
+.btn-secondary:hover{background:#eef2ff}
+.btn:active{transform:translateY(0)}
+
+#capCard{border-left:4px solid #f59e0b}
+#capCard .section-title{color:#d97706}
+.cap-line{padding:2px 0;border-bottom:1px solid #fef3c7}
+.cap-shop{font-weight:700;color:#92400e}
+.cap-detail{color:#b45309}
+
+.merge-hint{width:100%;max-width:920px;text-align:center;font-size:13px;color:#64748b;margin-top:6px;display:none}
+.merge-hint.visible{display:block}
+
+.progress-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:999}
+.progress-overlay.visible{display:flex}
+.progress-box{background:#fff;border-radius:16px;padding:32px 48px;text-align:center}
+.progress-box .spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top:4px solid #6366f1;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-box p{color:#475569;font-size:14px}
+</style>
+</head>
+<body>
+
+<h1>問卷物料模板生成器</h1>
+<p class="subtitle">同時拖拽問卷結果和商家服務市場訂單，自動合併生成物料下單模板</p>
+
+<div id="mainMode">
+<div class="drop-row">
+  <div class="drop-zone" id="qsDropZone">
+    <span class="zone-tag tag-questionnaire">問卷結果</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span class="label">將問卷結果 Excel 拖拽到此處</span>
+    <span class="hint">支援 .xlsx / .xls 格式</span>
+    <span class="loaded-info" id="qsLoadedInfo" style="display:none"></span>
+    <input type="file" id="qsFileInput" accept=".xlsx,.xls">
+  </div>
+
+  <div class="drop-zone" id="svDropZone">
+    <span class="zone-tag tag-service">商家服務訂單</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span class="label">將商家服務市場訂單拖拽到此處</span>
+    <span class="hint">支援 .xlsx / .xls 格式</span>
+    <span class="loaded-info" id="svLoadedInfo" style="display:none"></span>
+    <input type="file" id="svFileInput" accept=".xlsx,.xls">
+  </div>
+
+  <div class="drop-zone" id="vlDropZone">
+    <span class="zone-tag tag-vlookup">門店資料 Vlookup</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <span class="label">將門店資料 Excel 拖拽到此處<br><small style="color:#94a3b8">（Vlookup：門店ID→電話/地址/名稱）</small></span>
+    <span class="hint">支援 .xlsx / .xls 格式</span>
+    <span class="loaded-info" id="vlLoadedInfo" style="display:none"></span>
+    <input type="file" id="vlFileInput" accept=".xlsx,.xls">
+  </div>
+</div>
+</div>
+
+<div id="tripleMode" style="display:none;width:100%;max-width:920px">
+  <div class="drop-row" style="margin-bottom:16px">
+    <div class="drop-zone" id="vlDropZoneTriple" style="min-width:280px;height:140px">
+      <span class="zone-tag tag-vlookup">門店資料 Vlookup</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span class="label">將門店資料 Excel 拖拽到此處</span>
+      <span class="hint">Vlookup：門店ID→電話/地址/名稱</span>
+      <span class="loaded-info" id="vlLoadedInfoTriple" style="display:none"></span>
+      <input type="file" id="vlFileInputTriple" accept=".xlsx,.xls">
+    </div>
+  </div>
+
+  <div class="card visible" style="margin-top:0">
+    <h3 class="section-title">📝 粘貼提報表格（6列：創建時間、shopid、門店名稱、提報物料、物料數量、備註）</h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:10px">直接從 Excel 複製表格內容，粘貼到下方文本框。支持 Tab 分隔或空格對齊。</p>
+    <textarea id="triplePasteArea" style="width:100%;height:200px;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-size:13px;font-family:monospace;resize:vertical" placeholder="創建時間\tshopid\t門店名稱\t提報物料\t物料數量\t備註\n2025-06-01\t123456\t測試門店\t大膠袋\t5\t\n..."></textarea>
+  </div>
+
+  <div style="width:100%;display:flex;justify-content:center;margin-top:16px;gap:12px">
+    <button class="btn btn-primary" id="tripleRunBtn">🚀 生成物料底板</button>
+    <button class="btn btn-secondary" id="tripleResetBtn">🔄 清空</button>
+  </div>
+
+  <div class="card" id="tripleStatusCard">
+    <div class="status-inner">
+      <span class="icon" id="tripleStatusIcon"></span>
+      <span class="text" id="tripleStatusText"></span>
+    </div>
+  </div>
+
+  <div class="card" id="tripleCapCard" style="border-left:4px solid #f59e0b">
+    <h3 class="section-title" style="color:#d97706">⚠️ 數量上限審查（單商品單門店上限10）</h3>
+    <div id="tripleCapBody" style="color:#dc2626;font-size:13px;line-height:1.8"></div>
+  </div>
+
+  <div class="card" id="triplePreviewCard">
+    <h3 class="section-title">📊 預覽：物料下單模板</h3>
+    <div class="scroll-wrapper">
+      <table class="preview-table" id="triplePreviewTable"></table>
+    </div>
+  </div>
+
+  <div class="btn-row" id="tripleBtnRow" style="margin-top:20px">
+    <button class="btn btn-primary" id="tripleExportBtn">⬇ 導出 Excel</button>
+  </div>
+</div>
+
+<p class="merge-hint" id="mergeHint">💡 上傳檔案後，點擊下方按鈕開始生成</p>
+
+<div style="width:100%;max-width:920px;display:flex;justify-content:center;margin-top:16px">
+  <button class="btn btn-primary" id="runBtn" disabled style="opacity:0.5;cursor:not-allowed">🚀 開始生成</button>
+</div>
+
+<div class="card" id="statusCard">
+  <div class="status-inner">
+    <span class="icon" id="statusIcon"></span>
+    <span class="text" id="statusText"></span>
+  </div>
+</div>
+
+<div class="card" id="statsCard">
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-value" id="statShops">0</div><div class="stat-label">門店數量</div></div>
+    <div class="stat-card"><div class="stat-value" id="statItems">0</div><div class="stat-label">有下單的品項</div></div>
+    <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">總下單數</div></div>
+    <div class="stat-card"><div class="stat-value" id="statMatched">0</div><div class="stat-label">服務訂單匹配</div></div>
+  </div>
+</div>
+
+<div class="card" id="capCard">
+  <h3 class="section-title">⚠️ 數量上限審查（單商品單門店上限10）</h3>
+  <div id="capBody" style="color:#dc2626;font-size:13px;line-height:1.8"></div>
+</div>
+
+<div class="card" id="mappingCard">
+  <h3 class="section-title">🔗 商品映射對照表</h3>
+  <table class="mapping-table">
+    <thead><tr><th>物料模板列名</th><th>問卷中文列</th><th>問卷英文列</th><th>服務訂單規格</th></tr></thead>
+    <tbody id="mappingBody"></tbody>
+  </table>
+</div>
+
+<div class="card" id="previewCard">
+  <h3 class="section-title">📊 預覽：物料下單模板（問卷<span style="color:#6366f1">藍</span> + 服務訂單<span style="color:#d97706">橙</span>）</h3>
+  <div class="scroll-wrapper">
+    <table class="preview-table" id="previewTable"></table>
+  </div>
+</div>
+
+<div class="btn-row" id="btnRow">
+  <button class="btn btn-primary" id="exportBtn">⬇ 導出 Excel</button>
+  <button class="btn btn-secondary" id="resetBtn">🔄 重新上傳</button>
+</div>
+
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-box">
+    <div class="spinner"></div>
+    <p id="progressText">正在生成 Excel...</p>
+  </div>
+</div>
+
+<script>
+// ========== 問卷 CSP 對應關係映射 ==========
+// 來源: CSP商品管理模板.xlsx
+// Col 5(問卷結果-商品名稱) → templateName, Col 9(問卷結果-商品名稱-英文) → enPattern
+var CSP_MAPPINGS = [
+  { templateName: '大膠袋',       cnPattern: '11.膠袋',    enPattern: '22.Plastic Bag' },
+  { templateName: '小膠袋',       cnPattern: '12.小膠袋',   enPattern: '23.Small Plastic Bag' },
+  { templateName: '單杯無紡布袋', cnPattern: '6.無紡布袋（保溫）', enPattern: '17.Non-woven bag(single serve cup' },
+  { templateName: '雙杯無紡布袋', cnPattern: '7.無紡布袋（保溫）', enPattern: '18.Non-woven bag(double serve cup' },
+  { templateName: '3號無紡布袋',  cnPattern: '8.無紡布袋（保溫）', enPattern: '19.Non-woven bag( medium size' },
+  { templateName: '4號無紡布袋',  cnPattern: '9.無紡布袋（保溫）', enPattern: '20.Non-woven bag( Standard size' },
+  { templateName: '紙袋',         cnPattern: '5.紙袋',      enPattern: '16.Paper Bag' },
+  { templateName: '打印紙',       cnPattern: '14.打印紙',   enPattern: '25.Print Roll' },
+  { templateName: '紙漿杯2托',    cnPattern: '10.紙漿杯托', enPattern: '21.Cup Holder' },
+  { templateName: '封簽',         cnPattern: '13.食品安全封簽', enPattern: '24.Food Safety Seal' },
+];
+
+// ========== 商家服務市場訂單 CSP 對應（規格 G列 → 物料模板列名） ==========
+// 來源: CSP商品管理模板.xlsx
+// Col 8(商家服務訂單-商品名稱) → specName, Col 4(物料-訂單模板-商品名稱) → templateName
+var SERVICE_CSP_MAPPINGS = [
+  { specName: '大膠袋',         templateName: '大膠袋' },
+  { specName: '小膠袋',         templateName: '小膠袋' },
+  { specName: '規格一單杯裝',   templateName: '單杯無紡布袋' },
+  { specName: '規格二雙杯裝',   templateName: '雙杯無紡布袋' },
+  { specName: '規格三中號袋',   templateName: '3號無紡布袋' },
+  { specName: '規格四大號袋',   templateName: '4號無紡布袋' },
+  { specName: '通版紙袋',       templateName: '紙袋' },
+  { specName: '熱敏紙',         templateName: '打印紙' },
+  { specName: '紙漿杯托-2杯裝', templateName: '紙漿杯2托' },
+  { specName: '食品級飲品封口紙', templateName: '飲品封口紙' },
+  { specName: '食物安全封簽',   templateName: '封簽' },
+];
+
+// 物料模板完整列名
+var TEMPLATE_COLUMNS = [
+  '下單日期','門店ID','門店名稱','電話','地址',
+  '大膠袋','小膠袋','單杯無紡布袋','雙杯無紡布袋','3號無紡布袋','4號無紡布袋',
+  '紙袋','打印紙','紙漿杯2托','封簽',
+  '玻璃門貼','優惠貼','海報（中文版）','亞克力水牌',
+  'pos機','充電頭','充電線','紙漿杯托-4托','飲品封口紙','雙杯裝紙袋','單杯裝紙袋',
+  '備註','商家營業時間'
+];
+
+// 合併後用來標記某個數量來源的追蹤表: shopId -> templateName -> 'qs' | 'sv' | 'both'
+var quantitySourceTracker = {};
+
+var qsParsedData = null;
+var svParsedData = null;
+var vlParsedData = null;  // Vlookup data: { shopId: { contact, address, shopName } }
+var mergedData = null;
+var qsHeaders = null;
+var qsColMapping = null;
+
+// ========== 數值提取：取 "-"前面的數字 ==========
+function extractQuantity(val) {
+  if (!val || typeof val !== 'string') return null;
+  val = val.trim();
+  if (val === '' || val.toLowerCase() === 'nan') return null;
+  var match = val.match(/^\s*(\d+)\s*/);
+  if (match) return parseInt(match[1], 10);
+  return null;
+}
+
+// ========== 尋找問卷列索引 ==========
+function findColumnIndex(columns, pattern) {
+  for (var i = 0; i < columns.length; i++) {
+    if (columns[i].includes(pattern)) return i;
+  }
+  return -1;
+}
+
+// ========== 解析問卷 Excel ==========
+function parseQuestionnaire(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      if (raw.length < 2) {
+        showStatus('error', '❌ 問卷檔案為空或格式不正確');
+        return;
+      }
+
+      var headers = raw[0].map(function(h) { return String(h).trim(); });
+      var rows = raw.slice(1).filter(function(r) { return r.some(function(c) { return c !== ''; }); });
+
+      var shopIdIdx = headers.indexOf('shopId');
+      if (shopIdIdx === -1) {
+        showStatus('error', '❌ 找不到 shopId 列，請確認 Excel 格式是否為問卷結果');
+        return;
+      }
+
+      var submitTimeIdx = 2;
+
+      var colMapping = {};
+      var mappedCount = 0;
+      CSP_MAPPINGS.forEach(function(m) {
+        var cnIdx = findColumnIndex(headers, m.cnPattern);
+        var enIdx = findColumnIndex(headers, m.enPattern);
+        colMapping[m.templateName] = { cnIdx: cnIdx, enIdx: enIdx };
+        if (cnIdx >= 0 || enIdx >= 0) mappedCount++;
+      });
+
+      if (mappedCount === 0) {
+        showStatus('error', '❌ 無法匹配任何商品列，請確認 Excel 格式是否為問卷結果');
+        return;
+      }
+
+      qsHeaders = headers;
+      qsColMapping = colMapping;
+
+      var resultRows = [];
+      rows.forEach(function(row) {
+        var shopId = String(row[shopIdIdx] || '').trim();
+        if (!shopId) return;
+        var submitTime = submitTimeIdx >= 0 ? String(row[submitTimeIdx] || '').trim() : '';
+        var newRow = {};
+        TEMPLATE_COLUMNS.forEach(function(col) { newRow[col] = ''; });
+        newRow['下單日期'] = submitTime;
+        newRow['門店ID'] = shopId;
+
+        CSP_MAPPINGS.forEach(function(m) {
+          var info = colMapping[m.templateName];
+          var qty = null;
+          if (info.cnIdx >= 0 && row[info.cnIdx]) qty = extractQuantity(String(row[info.cnIdx]));
+          if (qty === null && info.enIdx >= 0 && row[info.enIdx]) qty = extractQuantity(String(row[info.enIdx]));
+          if (qty !== null && qty > 0) newRow[m.templateName] = qty;
+        });
+        resultRows.push(newRow);
+      });
+
+      qsParsedData = resultRows;
+
+      document.getElementById('qsDropZone').classList.add('loaded');
+      document.getElementById('qsLoadedInfo').textContent = '✅ ' + resultRows.length + ' 個門店已載入';
+      document.getElementById('qsLoadedInfo').style.display = '';
+
+      checkRunReady();
+
+    } catch(err) {
+      showStatus('error', '❌ 問卷解析失敗：' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ========== 解析門店資料 Vlookup Excel ==========
+function parseVlookup(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      if (raw.length < 2) {
+        showStatus('error', '❌ 門店資料檔案為空或格式不正確');
+        return;
+      }
+
+      var headers = raw[0].map(function(h) { return String(h).trim(); });
+
+      // Find column indices for: 门店id, contact, address, 门店名称
+      var shopIdCol = -1, contactCol = -1, addressCol = -1, shopNameCol = -1;
+      for (var i = 0; i < headers.length; i++) {
+        var h = headers[i];
+        if (h === '门店id' || h === '門店id' || h === '门店ID' || h === '門店ID') shopIdCol = i;
+        if (h === 'contact' || h === '電話' || h === '电话') contactCol = i;
+        if (h === 'address' || h === '地址' || h === '收貨地址' || h === '收货地址') addressCol = i;
+        if (h === '门店名称' || h === '門店名稱' || h === '门店名' || h === '門店名') shopNameCol = i;
+      }
+
+      if (shopIdCol === -1) {
+        showStatus('error', '❌ 門店資料找不到 门店id / 門店ID 列');
+        return;
+      }
+
+      var vlMap = {};
+      var rowCount = 0;
+      for (var r = 1; r < raw.length; r++) {
+        var row = raw[r];
+        if (!row || !row[shopIdCol]) continue;
+        var shopId = String(row[shopIdCol]).trim();
+        if (!shopId) continue;
+        vlMap[shopId] = {
+          contact: contactCol >= 0 ? String(row[contactCol] || '').trim() : '',
+          address: addressCol >= 0 ? String(row[addressCol] || '').trim() : '',
+          shopName: shopNameCol >= 0 ? String(row[shopNameCol] || '').trim() : ''
+        };
+        rowCount++;
+      }
+
+      vlParsedData = vlMap;
+
+      document.getElementById('vlDropZone').classList.add('loaded');
+      document.getElementById('vlLoadedInfo').textContent = '✅ ' + rowCount + ' 個門店資料已載入';
+      document.getElementById('vlLoadedInfo').style.display = '';
+
+      checkRunReady();
+
+    } catch(err) {
+      showStatus('error', '❌ 門店資料解析失敗：' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ========== 解析商家服務市場訂單 Excel ==========
+function parseServiceOrder(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+      if (raw.length < 2) {
+        showStatus('error', '❌ 服務訂單檔案為空或格式不正確');
+        return;
+      }
+
+      // Detect header row — the real header may be in row 2 (row index 1)
+      var headerRowIdx = 0;
+      var headers = raw[0].map(function(h) { return String(h).trim(); });
+
+      if (raw.length > 1) {
+        var firstDataRow = raw[1].map(function(h) { return String(h).trim(); });
+        if (firstDataRow.indexOf('訂單號') >= 0 || firstDataRow.indexOf('订单号') >= 0 || firstDataRow.indexOf('Keeta門店ID') >= 0 || firstDataRow.indexOf('Keeta门店ID') >= 0) {
+          headerRowIdx = 1;
+          headers = firstDataRow;
+        }
+      }
+
+      var dataStartIdx = headerRowIdx + 1;
+      var rows = raw.slice(dataStartIdx).filter(function(r) { return r.some(function(c) { return c !== ''; }); });
+
+      var shopIdCol = headers.indexOf('Keeta门店ID');
+      if (shopIdCol === -1) shopIdCol = headers.indexOf('Keeta門店ID');
+      var orderTimeCol = headers.indexOf('下单时间');
+      if (orderTimeCol === -1) orderTimeCol = headers.indexOf('下單時間');
+      var specCol = headers.indexOf('规格');
+      if (specCol === -1) specCol = headers.indexOf('規格');
+      var qtyCol = headers.indexOf('数量');
+      if (qtyCol === -1) qtyCol = headers.indexOf('數量');
+      var phoneCol = headers.indexOf('电话');
+      if (phoneCol === -1) phoneCol = headers.indexOf('電話');
+      var addressCol = headers.indexOf('收货地址');
+      if (addressCol === -1) addressCol = headers.indexOf('收貨地址');
+
+      if (shopIdCol === -1) {
+        showStatus('error', '❌ 服務訂單找不到 Keeta門店ID / Keeta门店ID 列');
+        return;
+      }
+
+      // Build a map: shopId -> { phone, address, orderTime, items: { templateName: totalQty } }
+      var serviceMap = {};
+      var specMatchCount = {};
+      SERVICE_CSP_MAPPINGS.forEach(function(m) { specMatchCount[m.specName] = 0; });
+
+      rows.forEach(function(row) {
+        var shopId = String(row[shopIdCol] || '').trim();
+        if (!shopId) return;
+        if (shopId === 'Keeta门店ID' || shopId === 'Keeta門店ID' || shopId === '規格' || shopId === '规格') return;
+
+        if (!serviceMap[shopId]) {
+          serviceMap[shopId] = {
+            orderTime: orderTimeCol >= 0 ? String(row[orderTimeCol] || '').trim() : '',
+            phone: phoneCol >= 0 ? String(row[phoneCol] || '').trim() : '',
+            address: addressCol >= 0 ? String(row[addressCol] || '').trim() : '',
+            items: {}
+          };
+        }
+
+        // If this row has order time, update it (keep the latest)
+        if (orderTimeCol >= 0 && row[orderTimeCol]) {
+          var existingTime = serviceMap[shopId].orderTime;
+          var newTime = String(row[orderTimeCol]).trim();
+          if (!existingTime || newTime > existingTime) {
+            serviceMap[shopId].orderTime = newTime;
+          }
+        }
+
+        // Map spec (G列) to template column via SERVICE_CSP_MAPPINGS
+        var specVal = specCol >= 0 ? String(row[specCol] || '').trim() : '';
+        if (!specVal || specVal === '规格' || specVal === '規格') return;
+
+        SERVICE_CSP_MAPPINGS.forEach(function(m) {
+          if (specVal === m.specName) {
+            var rawQty = qtyCol >= 0 ? row[qtyCol] : 0;
+            var qty = 0;
+            if (typeof rawQty === 'number') {
+              qty = rawQty;
+            } else if (typeof rawQty === 'string') {
+              var numMatch = rawQty.match(/^\s*(\d+)/);
+              if (numMatch) qty = parseInt(numMatch[1], 10);
+            }
+            if (qty > 0) {
+              if (!serviceMap[shopId].items[m.templateName]) serviceMap[shopId].items[m.templateName] = 0;
+              serviceMap[shopId].items[m.templateName] += qty;
+              specMatchCount[m.specName]++;
+            }
+          }
+        });
+      });
+
+      var totalShopIds = Object.keys(serviceMap).length;
+      var totalSpecMatched = 0;
+      for (var k in specMatchCount) { if (specMatchCount[k] > 0) totalSpecMatched++; }
+
+      svParsedData = { serviceMap: serviceMap, specMatchCount: specMatchCount };
+
+      document.getElementById('svDropZone').classList.add('loaded');
+      document.getElementById('svLoadedInfo').textContent = '✅ ' + totalShopIds + ' 個門店，' + totalSpecMatched + '/' + SERVICE_CSP_MAPPINGS.length + ' 規格匹配';
+      document.getElementById('svLoadedInfo').style.display = '';
+
+      checkRunReady();
+
+    } catch(err) {
+      showStatus('error', '❌ 服務訂單解析失敗：' + err.message);
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ========== 合併問卷 + 服務訂單 ==========
+function tryMergeAndRender() {
+  if (!qsParsedData && !svParsedData) {
+    hide('statusCard'); hide('statsCard'); hide('capCard'); hide('mappingCard'); hide('previewCard');
+    document.getElementById('btnRow').className = 'btn-row';
+    return;
+  }
+
+  if (!qsParsedData) {
+    document.getElementById('mergeHint').className = 'merge-hint visible';
+    showStatus('success', '✅ 商家服務訂單已載入，等待問卷結果上傳後合併');
+    return;
+  }
+
+  if (!svParsedData) {
+    document.getElementById('mergeHint').className = 'merge-hint visible';
+    showStatus('success', '✅ 問卷結果已載入 (' + qsParsedData.length + ' 門店)，等待商家服務訂單上傳後合併');
+    qsParsedData.forEach(function(r) { r['備註'] = '【問卷】'; });
+    // Vlookup: fill 門店名稱, 電話, 地址 for questionnaire-only mode
+    if (vlParsedData) {
+      qsParsedData.forEach(function(row) {
+        var shopId = row['門店ID'];
+        if (vlParsedData[shopId]) {
+          var vlInfo = vlParsedData[shopId];
+          if (vlInfo.shopName) row['門店名稱'] = vlInfo.shopName;
+          if (vlInfo.contact) row['電話'] = vlInfo.contact;
+          if (vlInfo.address) row['地址'] = vlInfo.address;
+        }
+      });
+    }
+    // Cap check for questionnaire-only mode
+    var MATERIAL_COLS_QS = TEMPLATE_COLUMNS.filter(function(col) {
+      return col !== '下單日期' && col !== '門店ID' && col !== '門店名稱' && col !== '電話' && col !== '地址' && col !== '備註' && col !== '商家營業時間';
+    });
+    var capLogQs = [];
+    qsParsedData.forEach(function(row) {
+      var capped = [];
+      MATERIAL_COLS_QS.forEach(function(col) {
+        var val = row[col];
+        if (val === '' || val === undefined || val === null) return;
+        var num = typeof val === 'number' ? val : parseInt(val, 10);
+        if (isNaN(num) || num <= 0) return;
+        if (num > 10) {
+          row[col] = 10;
+          capped.push(col + '(' + num + '→10)');
+        }
+      });
+      if (capped.length > 0) {
+        capLogQs.push({ shopId: row['門店ID'], details: capped });
+      }
+    });
+    if (capLogQs.length > 0) {
+      var capHtmlQs = '<div style="margin-bottom:8px">共 <strong>' + capLogQs.length + '</strong> 個門店有商品數量超過10，已截斷為10：</div>';
+      capLogQs.forEach(function(item) {
+        capHtmlQs += '<div class="cap-line"><span class="cap-shop">門店 ' + item.shopId + '</span> — <span class="cap-detail">' + item.details.join('、') + '</span></div>';
+      });
+      document.getElementById('capBody').innerHTML = capHtmlQs;
+      show('capCard');
+    } else {
+      hide('capCard');
+    }
+    renderMappingInfo(qsHeaders, qsColMapping, null);
+    // mappingCard hidden per user request
+    renderPreview(qsParsedData, null);
+    show('previewCard');
+    document.getElementById('statShops').textContent = qsParsedData.length;
+    document.getElementById('statItems').textContent = countItems(qsParsedData);
+    document.getElementById('statTotal').textContent = countTotal(qsParsedData);
+    document.getElementById('statMatched').textContent = '-';
+    show('statsCard');
+    document.getElementById('btnRow').className = 'btn-row visible';
+    mergedData = qsParsedData; // Can export questionnaire-only
+    return;
+  }
+
+  // Both available — merge!
+  document.getElementById('mergeHint').className = 'merge-hint';
+  var serviceMap = svParsedData.serviceMap;
+  var matchedShops = 0;
+  quantitySourceTracker = {};
+
+  var resultRows = [];
+
+  // Use questionnaire rows as the base – 下單日期, 門店ID must NOT be changed
+  qsParsedData.forEach(function(qsRow) {
+    var row = {};
+    TEMPLATE_COLUMNS.forEach(function(col) { row[col] = qsRow[col] || ''; });
+
+    var shopId = qsRow['門店ID'];
+
+    // Vlookup: fill 門店名稱, 電話, 地址 from vlParsedData
+    if (vlParsedData && vlParsedData[shopId]) {
+      var vlInfo = vlParsedData[shopId];
+      if (vlInfo.shopName) row['門店名稱'] = vlInfo.shopName;
+      if (vlInfo.contact) row['電話'] = vlInfo.contact;
+      if (vlInfo.address) row['地址'] = vlInfo.address;
+    }
+
+    var svInfo = serviceMap[shopId];
+    if (svInfo) {
+      matchedShops++;
+
+      // Add service order quantities into corresponding template columns
+      for (var tmplName in svInfo.items) {
+        var svQty = svInfo.items[tmplName];
+        var existingQty = row[tmplName];
+        if (!quantitySourceTracker[shopId]) quantitySourceTracker[shopId] = {};
+        if (existingQty && existingQty !== '' && existingQty > 0) {
+          // Both sources have values — sum them
+          row[tmplName] = (typeof existingQty === 'number' ? existingQty : parseInt(existingQty, 10) || 0) + svQty;
+          quantitySourceTracker[shopId][tmplName] = 'both';
+        } else {
+          row[tmplName] = svQty;
+          quantitySourceTracker[shopId][tmplName] = 'sv';
+        }
+      }
+    }
+
+    // Determine 備註 source tag for this row
+    var hasQsData = false;
+    var hasSvData = false;
+    TEMPLATE_COLUMNS.forEach(function(col) {
+      if (col === '下單日期' || col === '門店ID' || col === '門店名稱' || col === '電話' || col === '地址' || col === '備註' || col === '商家營業時間') return;
+      var src = quantitySourceTracker[shopId] ? quantitySourceTracker[shopId][col] : null;
+      if (src === 'both') { hasQsData = true; hasSvData = true; }
+      else if (src === 'sv') { hasSvData = true; }
+      else if (row[col] && row[col] !== '' && row[col] > 0) { hasQsData = true; }
+    });
+    var tags = [];
+    if (hasQsData) tags.push('【問卷】');
+    if (hasSvData) tags.push('【商城】');
+    row['備註'] = tags.join('');
+
+    resultRows.push(row);
+  });
+
+  // Add service order shops that are NOT in the questionnaire
+  var qsShopIds = {};
+  qsParsedData.forEach(function(r) { qsShopIds[r['門店ID']] = true; });
+  for (var svShopId in serviceMap) {
+    if (!qsShopIds[svShopId]) {
+      var newRow = {};
+      TEMPLATE_COLUMNS.forEach(function(col) { newRow[col] = ''; });
+      newRow['門店ID'] = svShopId;
+      newRow['備註'] = '【商城】';
+
+      // Vlookup: fill 門店名稱, 電話, 地址
+      if (vlParsedData && vlParsedData[svShopId]) {
+        var vlInfo2 = vlParsedData[svShopId];
+        if (vlInfo2.shopName) newRow['門店名稱'] = vlInfo2.shopName;
+        if (vlInfo2.contact) newRow['電話'] = vlInfo2.contact;
+        if (vlInfo2.address) newRow['地址'] = vlInfo2.address;
+      }
+
+      var svInfo = serviceMap[svShopId];
+      if (svInfo.orderTime) newRow['下單日期'] = svInfo.orderTime;
+      if (!quantitySourceTracker[svShopId]) quantitySourceTracker[svShopId] = {};
+      for (var tmplName2 in svInfo.items) {
+        newRow[tmplName2] = svInfo.items[tmplName2];
+        quantitySourceTracker[svShopId][tmplName2] = 'sv';
+      }
+      resultRows.push(newRow);
+    }
+  }
+
+  // Cap check: same shop + same product, if total qty > 10 then cap to 10
+  var MATERIAL_COLS = TEMPLATE_COLUMNS.filter(function(col) {
+    return col !== '下單日期' && col !== '門店ID' && col !== '門店名稱' && col !== '電話' && col !== '地址' && col !== '備註' && col !== '商家營業時間';
+  });
+  var capLog = [];
+  resultRows.forEach(function(row) {
+    var capped = [];
+    MATERIAL_COLS.forEach(function(col) {
+      var val = row[col];
+      if (val === '' || val === undefined || val === null) return;
+      var num = typeof val === 'number' ? val : parseInt(val, 10);
+      if (isNaN(num) || num <= 0) return;
+      if (num > 10) {
+        row[col] = 10;
+        capped.push(col + '(' + num + '→10)');
+      }
+    });
+    if (capped.length > 0) {
+      capLog.push({ shopId: row['門店ID'], details: capped });
+    }
+  });
+  if (capLog.length > 0) {
+    var capHtml = '<div style="margin-bottom:8px">共 <strong>' + capLog.length + '</strong> 個門店有商品數量超過10，已截斷為10：</div>';
+    capLog.forEach(function(item) {
+      capHtml += '<div class="cap-line"><span class="cap-shop">門店 ' + item.shopId + '</span> — <span class="cap-detail">' + item.details.join('、') + '</span></div>';
+    });
+    document.getElementById('capBody').innerHTML = capHtml;
+    show('capCard');
+  } else {
+    hide('capCard');
+  }
+
+  // Calculate stats
+  var totalOrders = 0;
+  var itemsWithOrders = 0;
+  resultRows.forEach(function(row) {
+    TEMPLATE_COLUMNS.forEach(function(col) {
+      if (col === '下單日期' || col === '門店ID' || col === '門店名稱' || col === '電話' || col === '地址' || col === '備註' || col === '商家營業時間') return;
+      var val = row[col];
+      if (val !== '' && val !== undefined && val !== null) {
+        var num = typeof val === 'number' ? val : parseInt(val, 10);
+        if (!isNaN(num) && num > 0) {
+          totalOrders += num;
+          itemsWithOrders++;
+        }
+      }
+    });
+  });
+
+  showStatus('success', '✅ 合併完成！問卷 ' + qsParsedData.length + ' 門店 + 服務訂單 ' + Object.keys(serviceMap).length + ' 門店，匹配 ' + matchedShops + ' 門店');
+
+  document.getElementById('statShops').textContent = resultRows.length;
+  document.getElementById('statItems').textContent = itemsWithOrders;
+  document.getElementById('statTotal').textContent = totalOrders;
+  document.getElementById('statMatched').textContent = matchedShops;
+  show('statsCard');
+
+  renderMappingInfo(qsHeaders, qsColMapping, svParsedData.specMatchCount);
+  // mappingCard hidden per user request
+
+  renderPreview(resultRows, serviceMap);
+  show('previewCard');
+
+  document.getElementById('btnRow').className = 'btn-row visible';
+  mergedData = resultRows;
+}
+
+function countItems(data) {
+  var count = 0;
+  data.forEach(function(row) {
+    CSP_MAPPINGS.forEach(function(m) {
+      var val = row[m.templateName];
+      if (val !== '' && val !== undefined && val !== null && val > 0) count++;
+    });
+  });
+  return count;
+}
+
+function countTotal(data) {
+  var total = 0;
+  data.forEach(function(row) {
+    CSP_MAPPINGS.forEach(function(m) {
+      var val = row[m.templateName];
+      if (val !== '' && val !== undefined && val !== null && val > 0) {
+        total += (typeof val === 'number' ? val : parseInt(val, 10) || 0);
+      }
+    });
+  });
+  return total;
+}
+
+// ========== 渲染映射表 ==========
+function renderMappingInfo(headers, colMapping, specMatchCount) {
+  var tbody = document.getElementById('mappingBody');
+  tbody.innerHTML = '';
+
+  // Show only material columns (skip base info columns)
+  var BASE_COLS = ['\u4E0B\u55AE\u65E5\u671F','\u9580\u5E97ID','\u9580\u5E97\u540D\u7A31','\u96FB\u8A71','\u5730\u5740','\u5099\u8A3B','\u5546\u5BB6\u71DF\u696D\u6642\u9593'];
+  var allTemplateNames = TEMPLATE_COLUMNS.filter(function(c) { return BASE_COLS.indexOf(c) === -1; });
+
+  allTemplateNames.forEach(function(tmplName) {
+    var qsMapping = CSP_MAPPINGS.find(function(m) { return m.templateName === tmplName; });
+    var svMapping = SERVICE_CSP_MAPPINGS.find(function(m) { return m.templateName === tmplName; });
+
+    var qsCnDisplay = '\u2014', qsEnDisplay = '\u2014', qsCnOk = false, qsEnOk = false;
+    if (qsMapping && colMapping) {
+      var info = colMapping[tmplName];
+      if (info) {
+        qsCnOk = info.cnIdx >= 0;
+        qsEnOk = info.enIdx >= 0;
+        qsCnDisplay = qsCnOk ? truncate(headers[info.cnIdx], 50) : '\u672A\u627E\u5230';
+        qsEnDisplay = qsEnOk ? truncate(headers[info.enIdx], 50) : '\u672A\u627E\u5230';
+      }
+    }
+
+    var svDisplay = '\u2014', svOk = false;
+    if (svMapping) {
+      svOk = !specMatchCount || specMatchCount[svMapping.specName] > 0;
+      svDisplay = svMapping.specName;
+    }
+
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><strong>' + tmplName + '</strong></td>' +
+      '<td class="source-qs ' + (qsCnOk ? 'ok' : (qsMapping ? 'fail' : '')) + '">' +
+        (qsCnOk ? '\u2705 ' : (qsMapping ? '\u274C ' : '')) + qsCnDisplay + '</td>' +
+      '<td class="source-qs ' + (qsEnOk ? 'ok' : (qsMapping ? 'fail' : '')) + '">' +
+        (qsEnOk ? '\u2705 ' : (qsMapping ? '\u274C ' : '')) + qsEnDisplay + '</td>' +
+      '<td class="source-sv ' + (svOk ? 'ok' : (svMapping ? 'fail' : '')) + '">' +
+        (svOk ? '\u2705 ' : (svMapping ? '\u274C ' : '')) + svDisplay + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ========== 渲染預覽 ==========
+function renderPreview(data, serviceMap) {
+  var table = document.getElementById('previewTable');
+  // Show ALL template columns including ones with no mapping source
+  var displayCols = TEMPLATE_COLUMNS.slice();
+
+  var html = '<thead><tr>';
+  displayCols.forEach(function(col) { html += '<th>' + col + '</th>'; });
+  html += '</tr></thead><tbody>';
+
+  data.forEach(function(row) {
+    html += '<tr>';
+    displayCols.forEach(function(col) {
+      var val = row[col];
+      var shopId = row['\u9580\u5E97ID'];
+      var source = quantitySourceTracker[shopId] ? quantitySourceTracker[shopId][col] : null;
+
+      var isBaseCol = (col === '\u4E0B\u55AE\u65E5\u671F' || col === '\u9580\u5E97ID' || col === '\u9580\u5E97\u540D\u7A31' || col === '\u96FB\u8A71' || col === '\u5730\u5740' || col === '\u5099\u8A3B' || col === '\u5546\u5BB6\u71DF\u696D\u6642\u9593');
+      if (isBaseCol) {
+        html += '<td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + (val || '') + '</td>';
+      } else if (val !== '' && val !== undefined && val !== null) {
+        var num = typeof val === 'number' ? val : parseInt(val, 10);
+        if (!isNaN(num) && num > 0) {
+          var cssClass = source === 'sv' ? 'num-cell-sv' : 'num-cell';
+          html += '<td class="' + cssClass + '">' + val + '</td>';
+        } else {
+          html += '<td>' + val + '</td>';
+        }
+      } else {
+        html += '<td class="empty-cell">-</td>';
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+// ========== 導出 Excel（使用 ExcelJS 支援凍結和篩選） ==========
+async function exportExcel() {
+  if (!mergedData) return;
+  showProgress('\u6B63\u5728\u751F\u6210 Excel...');
+
+  try {
+    var workbook = new ExcelJS.Workbook();
+    var sheet = workbook.addWorksheet('\u7269\u6599\u4E0B\u55AE');
+
+    var columns = TEMPLATE_COLUMNS.map(function(col) {
+      return { header: col, key: col, width: col.length <= 3 ? 8 : (col.length <= 6 ? 12 : 18) };
+    });
+    columns[0].width = 20;
+    columns[1].width = 14;
+    columns[2].width = 30;
+    columns[3].width = 16;
+    columns[4].width = 40;
+    columns[22].width = 14;
+    columns[25].width = 14;
+    columns[26].width = 20;
+    columns[27].width = 16;
+
+    sheet.columns = columns;
+
+    var headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6366F1' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 24;
+
+    mergedData.forEach(function(rowData) {
+      var rowArr = TEMPLATE_COLUMNS.map(function(col) {
+        var val = rowData[col];
+        if (val === '' || val === undefined || val === null) return null;
+        if (col === '\u4E0B\u55AE\u65E5\u671F' || col === '\u9580\u5E97ID') return String(val);
+        var num = Number(val);
+        return isNaN(num) ? String(val) : num;
+      });
+      sheet.addRow(rowArr);
+    });
+
+    for (var i = 2; i <= sheet.rowCount; i++) {
+      var row = sheet.getRow(i);
+      row.eachCell(function(cell, colNumber) {
+        if (colNumber >= 6 && colNumber <= 26) {
+          cell.alignment = { horizontal: 'center' };
+          if (cell.value !== null && cell.value !== undefined) {
+            // Color code: service-only items in orange
+            var shopId = row.getCell(2).value;
+            var colName = TEMPLATE_COLUMNS[colNumber - 1];
+            var source = quantitySourceTracker[shopId] ? quantitySourceTracker[shopId][colName] : null;
+            if (source === 'sv') {
+              cell.font = { bold: true, color: { argb: 'FFD97706' } };
+            } else if (source === 'both') {
+              cell.font = { bold: true, color: { argb: 'FF7C3AED' } };
+            } else {
+              cell.font = { bold: true, color: { argb: 'FF4F46E5' } };
+            }
+          }
+        }
+        if (colNumber <= 2) {
+          cell.font = { size: 11 };
+        }
+      });
+    }
+
+    sheet.views = [{ state: 'frozen', ySplit: 1, xSplit: 0, activeCell: 'A2' }];
+
+    sheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: sheet.rowCount, column: TEMPLATE_COLUMNS.length }
+    };
+
+    headerRow.eachCell(function(cell) {
+      cell.border = {
+        bottom: { style: 'medium', color: { argb: 'FF4338CA' } }
+      };
+    });
+
+    var buffer = await workbook.xlsx.writeBuffer();
+    var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+
+    var now = new Date();
+    var dateStr = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0');
+
+    a.href = url;
+    a.download = '物料底板' + dateStr + '.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    hideProgress();
+  } catch(err) {
+    hideProgress();
+    showStatus('error', '\u274C \u5C0E\u51FA\u5931\u6557\uFF1A' + err.message);
+    console.error(err);
+  }
+}
+
+// ========== UI helpers ==========
+function show(id) { document.getElementById(id).className = 'card visible'; }
+function hide(id) { document.getElementById(id).className = 'card'; }
+
+function showStatus(type, msg) {
+  var card = document.getElementById('statusCard');
+  card.className = 'card visible';
+  document.getElementById('statusIcon').textContent = type === 'success' ? '\u2705' : '\u26A0\uFE0F';
+  document.getElementById('statusText').innerHTML = msg;
+}
+function showProgress(text) {
+  document.getElementById('progressText').textContent = text || '\u8655\u7406\u4E2D...';
+  document.getElementById('progressOverlay').className = 'progress-overlay visible';
+}
+function hideProgress() {
+  document.getElementById('progressOverlay').className = 'progress-overlay';
+}
+function truncate(str, len) {
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+function resetAll() {
+  qsParsedData = null;
+  svParsedData = null;
+  vlParsedData = null;
+  mergedData = null;
+  qsHeaders = null;
+  qsColMapping = null;
+  quantitySourceTracker = {};
+  hide('statusCard'); hide('statsCard'); hide('capCard'); hide('mappingCard'); hide('previewCard');
+  document.getElementById('btnRow').className = 'btn-row';
+  document.getElementById('previewTable').innerHTML = '';
+  document.getElementById('qsFileInput').value = '';
+  document.getElementById('svFileInput').value = '';
+  document.getElementById('vlFileInput').value = '';
+  document.getElementById('qsDropZone').classList.remove('loaded');
+  document.getElementById('svDropZone').classList.remove('loaded');
+  document.getElementById('vlDropZone').classList.remove('loaded');
+  document.getElementById('qsLoadedInfo').style.display = 'none';
+  document.getElementById('svLoadedInfo').style.display = 'none';
+  document.getElementById('vlLoadedInfo').style.display = 'none';
+  document.getElementById('mergeHint').className = 'merge-hint';
+  var runBtn = document.getElementById('runBtn');
+  runBtn.disabled = true;
+  runBtn.style.opacity = '0.5';
+  runBtn.style.cursor = 'not-allowed';
+  document.getElementById('btnRow').className = 'btn-row';
+}
+
+// ========== 事件 ==========
+var qsDropZone = document.getElementById('qsDropZone');
+var qsFileInput = document.getElementById('qsFileInput');
+var svDropZone = document.getElementById('svDropZone');
+var svFileInput = document.getElementById('svFileInput');
+
+function setupDropZone(zone, input, parser) {
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', function(e) { e.preventDefault(); zone.classList.remove('dragover'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    var file = e.dataTransfer.files[0];
+    if (file) handleFile(file, parser, zone, input);
+  });
+  zone.addEventListener('click', function() { input.click(); });
+  input.addEventListener('change', function(e) {
+    if (e.target.files[0]) handleFile(e.target.files[0], parser, zone, input);
+  });
+}
+
+function handleFile(file, parser, zone, input) {
+  if (!file.name.match(/\.xlsx?$/i)) {
+    showStatus('error', '\u274C \u8ACB\u4E0A\u50B3 .xlsx / .xls \u683C\u5F0F\u7684 Excel \u6A94\u6848');
+    return;
+  }
+  parser(file);
+}
+
+var vlDropZone = document.getElementById('vlDropZone');
+var vlFileInput = document.getElementById('vlFileInput');
+
+setupDropZone(qsDropZone, qsFileInput, parseQuestionnaire);
+setupDropZone(svDropZone, svFileInput, parseServiceOrder);
+setupDropZone(vlDropZone, vlFileInput, parseVlookup);
+
+function checkRunReady() {
+  var runBtn = document.getElementById('runBtn');
+  if (qsParsedData || svParsedData || vlParsedData) {
+    runBtn.disabled = false;
+    runBtn.style.opacity = '1';
+    runBtn.style.cursor = 'pointer';
+  }
+}
+
+document.getElementById('runBtn').addEventListener('click', function() {
+  tryMergeAndRender();
+});
+document.getElementById('exportBtn').addEventListener('click', exportExcel);
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+
+// ========== 三合一提報功能 ==========
+var tripleVlData = null;
+var tripleMergedData = null;
+
+function switchMode(mode) {
+  if (mode === 'main') {
+    document.getElementById('mainMode').style.display = '';
+    document.getElementById('tripleMode').style.display = 'none';
+    document.getElementById('modeMainBtn').className = 'btn btn-primary';
+    document.getElementById('modeTripleBtn').className = 'btn btn-secondary';
+  } else {
+    document.getElementById('mainMode').style.display = 'none';
+    document.getElementById('tripleMode').style.display = '';
+    document.getElementById('modeMainBtn').className = 'btn btn-secondary';
+    document.getElementById('modeTripleBtn').className = 'btn btn-primary';
+  }
+}
+
+document.getElementById('modeMainBtn').addEventListener('click', function() { switchMode('main'); });
+document.getElementById('modeTripleBtn').addEventListener('click', function() { switchMode('triple'); });
+
+// 三合一 Vlookup 拖拽區（獨立於主功能的 Vlookup）
+var vlDropZoneTriple = document.getElementById('vlDropZoneTriple');
+var vlFileInputTriple = document.getElementById('vlFileInputTriple');
+setupDropZone(vlDropZoneTriple, vlFileInputTriple, function(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var wb = XLSX.read(e.target.result, { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (raw.length < 2) { tripleShowStatus('error', '❌ 門店資料檔案為空'); return; }
+      var headers = raw[0].map(function(h) { return String(h).trim(); });
+      var shopIdCol = -1, contactCol = -1, addressCol = -1, shopNameCol = -1;
+      for (var i = 0; i < headers.length; i++) {
+        var h = headers[i];
+        if (h === '门店id' || h === '門店id' || h === '门店ID' || h === '門店ID') shopIdCol = i;
+        if (h === 'contact' || h === '電話' || h === '电话') contactCol = i;
+        if (h === 'address' || h === '地址' || h === '收貨地址' || h === '收货地址') addressCol = i;
+        if (h === '门店名称' || h === '門店名稱' || h === '门店名' || h === '門店名') shopNameCol = i;
+      }
+      if (shopIdCol === -1) { tripleShowStatus('error', '❌ 找不到 门店id 列'); return; }
+      var vlMap = {};
+      var rowCount = 0;
+      for (var r = 1; r < raw.length; r++) {
+        var row = raw[r];
+        if (!row || !row[shopIdCol]) continue;
+        var shopId = String(row[shopIdCol]).trim();
+        if (!shopId) continue;
+        vlMap[shopId] = {
+          contact: contactCol >= 0 ? String(row[contactCol] || '').trim() : '',
+          address: addressCol >= 0 ? String(row[addressCol] || '').trim() : '',
+          shopName: shopNameCol >= 0 ? String(row[shopNameCol] || '').trim() : ''
+        };
+        rowCount++;
+      }
+      tripleVlData = vlMap;
+      vlDropZoneTriple.classList.add('loaded');
+      document.getElementById('vlLoadedInfoTriple').textContent = '✅ ' + rowCount + ' 個門店資料已載入';
+      document.getElementById('vlLoadedInfoTriple').style.display = '';
+      tripleShowStatus('success', '✅ 門店資料 Vlookup 已載入 (' + rowCount + ' 條)');
+    } catch(err) {
+      tripleShowStatus('error', '❌ 解析失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function tripleShowStatus(type, msg) {
+  var card = document.getElementById('tripleStatusCard');
+  card.className = 'card visible';
+  document.getElementById('tripleStatusIcon').textContent = type === 'success' ? '✅' : '⚠️';
+  document.getElementById('tripleStatusText').innerHTML = msg;
+}
+
+// 解析粘貼的表格內容
+function parseTriplePaste(text) {
+  var lines = text.trim().split(/\r?\n/);
+  if (lines.length === 0) return [];
+  var rows = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim();
+    if (!line) continue;
+    // 優先按 Tab 分割，若沒有 Tab 則按多個空格分割
+    var cols;
+    if (line.indexOf('\t') >= 0) {
+      cols = line.split('\t');
+    } else {
+      cols = line.split(/\s{2,}/);
+    }
+    // 若第一行像表頭則跳過
+    if (i === 0 && (cols[0] === '創建時間' || cols[0] === '创建时间' || cols[0] === 'shopid' || cols[0] === '門店名稱')) continue;
+    if (cols.length < 5) continue;
+    rows.push({
+      createTime: String(cols[0] || '').trim(),
+      shopId: String(cols[1] || '').trim(),
+      shopName: String(cols[2] || '').trim(),
+      material: String(cols[3] || '').trim(),
+      qty: String(cols[4] || '').trim(),
+      remark: cols.length >= 6 ? String(cols[5] || '').trim() : ''
+    });
+  }
+  return rows;
+}
+
+// 提報物料名稱 → 模板列名 映射（擴展 CSP 映射）
+var TRIPLE_CSP_MAP = {};
+CSP_MAPPINGS.forEach(function(m) {
+  TRIPLE_CSP_MAP[m.templateName] = m.templateName;
+  // 也支持簡稱匹配
+  if (m.templateName === '單杯無紡布袋') { TRIPLE_CSP_MAP['單杯裝'] = m.templateName; TRIPLE_CSP_MAP['規格一'] = m.templateName; TRIPLE_CSP_MAP['單杯無紡布袋'] = m.templateName; }
+  if (m.templateName === '雙杯無紡布袋') { TRIPLE_CSP_MAP['雙杯裝'] = m.templateName; TRIPLE_CSP_MAP['規格二'] = m.templateName; TRIPLE_CSP_MAP['雙杯無紡布袋'] = m.templateName; }
+  if (m.templateName === '3號無紡布袋') { TRIPLE_CSP_MAP['中號袋'] = m.templateName; TRIPLE_CSP_MAP['規格三'] = m.templateName; TRIPLE_CSP_MAP['3號無紡布袋'] = m.templateName; }
+  if (m.templateName === '4號無紡布袋') { TRIPLE_CSP_MAP['大號袋'] = m.templateName; TRIPLE_CSP_MAP['規格四'] = m.templateName; TRIPLE_CSP_MAP['4號無紡布袋'] = m.templateName; }
+  if (m.templateName === '紙漿杯2托') { TRIPLE_CSP_MAP['紙漿杯托'] = m.templateName; TRIPLE_CSP_MAP['杯托'] = m.templateName; TRIPLE_CSP_MAP['紙漿杯2托'] = m.templateName; }
+});
+SERVICE_CSP_MAPPINGS.forEach(function(m) {
+  TRIPLE_CSP_MAP[m.specName] = m.templateName;
+});
+
+function mapTripleMaterial(name) {
+  // 直接匹配
+  if (TRIPLE_CSP_MAP[name]) return TRIPLE_CSP_MAP[name];
+  // 模糊匹配：包含關鍵字
+  for (var key in TRIPLE_CSP_MAP) {
+    if (name.indexOf(key) >= 0) return TRIPLE_CSP_MAP[key];
+  }
+  return null;
+}
+
+function generateTripleBoard() {
+  var text = document.getElementById('triplePasteArea').value;
+  if (!text.trim()) { tripleShowStatus('error', '❌ 請先粘貼提報表格內容'); return; }
+
+  var rawRows = parseTriplePaste(text);
+  if (rawRows.length === 0) { tripleShowStatus('error', '❌ 未能解析出有效數據，請確認格式'); return; }
+
+  // 按 shopId + material 合併數量
+  var mergeMap = {}; // shopId -> { createTime, shopName, items: { templateName: qty }, unmapped: [{name,qty,remark}] }
+  for (var i = 0; i < rawRows.length; i++) {
+    var r = rawRows[i];
+    if (!r.shopId) continue;
+    var qtyNum = parseInt(r.qty, 10);
+    if (isNaN(qtyNum) || qtyNum <= 0) continue;
+
+    if (!mergeMap[r.shopId]) {
+      mergeMap[r.shopId] = { createTime: r.createTime, shopName: r.shopName, items: {}, unmapped: [] };
+    }
+    var mapped = mapTripleMaterial(r.material);
+    if (mapped) {
+      if (!mergeMap[r.shopId].items[mapped]) mergeMap[r.shopId].items[mapped] = 0;
+      mergeMap[r.shopId].items[mapped] += qtyNum;
+    } else {
+      mergeMap[r.shopId].unmapped.push({ name: r.material, qty: qtyNum, remark: r.remark });
+    }
+  }
+
+  // 生成模板行
+  var resultRows = [];
+  for (var shopId in mergeMap) {
+    var info = mergeMap[shopId];
+    var row = {};
+    TEMPLATE_COLUMNS.forEach(function(col) { row[col] = ''; });
+    row['下單日期'] = info.createTime;
+    row['門店ID'] = shopId;
+    row['門店名稱'] = info.shopName || '';
+
+    // Vlookup 填充
+    if (tripleVlData && tripleVlData[shopId]) {
+      var vl = tripleVlData[shopId];
+      if (vl.shopName) row['門店名稱'] = vl.shopName;
+      if (vl.contact) row['電話'] = vl.contact;
+      if (vl.address) row['地址'] = vl.address;
+    }
+
+    // 已映射物料
+    for (var tmpl in info.items) {
+      row[tmpl] = info.items[tmpl];
+    }
+
+    // 未映射物料寫入備註：原物料名×數量
+    var unmappedRemarks = [];
+    for (var u = 0; u < info.unmapped.length; u++) {
+      unmappedRemarks.push(info.unmapped[u].name + '×' + info.unmapped[u].qty);
+    }
+    if (unmappedRemarks.length > 0) {
+      row['備註'] = '未映射：' + unmappedRemarks.join('、');
+    } else {
+      row['備註'] = '【三合一提報】';
+    }
+
+    resultRows.push(row);
+  }
+
+  // 審查上限：同一門店同一商品 >10 則 cap 到 10
+  var MATERIAL_COLS = TEMPLATE_COLUMNS.filter(function(col) {
+    return col !== '下單日期' && col !== '門店ID' && col !== '門店名稱' && col !== '電話' && col !== '地址' && col !== '備註' && col !== '商家營業時間';
+  });
+  var capLog = [];
+  for (var ri = 0; ri < resultRows.length; ri++) {
+    var row = resultRows[ri];
+    var capped = [];
+    for (var ci = 0; ci < MATERIAL_COLS.length; ci++) {
+      var col = MATERIAL_COLS[ci];
+      var val = row[col];
+      if (val === '' || val === undefined || val === null) continue;
+      var num = typeof val === 'number' ? val : parseInt(val, 10);
+      if (isNaN(num) || num <= 0) continue;
+      if (num > 10) {
+        row[col] = 10;
+        capped.push(col + '(' + num + '→10)');
+      }
+    }
+    if (capped.length > 0) {
+      capLog.push({ shopId: row['門店ID'], details: capped });
+    }
+  }
+
+  if (capLog.length > 0) {
+    var capHtml = '<div style="margin-bottom:8px">共 <strong>' + capLog.length + '</strong> 個門店有商品數量超過10，已截斷為10：</div>';
+    for (var ci2 = 0; ci2 < capLog.length; ci2++) {
+      capHtml += '<div class="cap-line"><span class="cap-shop">門店 ' + capLog[ci2].shopId + '</span> — <span class="cap-detail">' + capLog[ci2].details.join('、') + '</span></div>';
+    }
+    document.getElementById('tripleCapBody').innerHTML = capHtml;
+    document.getElementById('tripleCapCard').className = 'card visible';
+  } else {
+    document.getElementById('tripleCapCard').className = 'card';
+  }
+
+  // 統計
+  var totalOrders = 0, itemsWithOrders = 0;
+  for (var ri2 = 0; ri2 < resultRows.length; ri2++) {
+    var row2 = resultRows[ri2];
+    for (var ci3 = 0; ci3 < TEMPLATE_COLUMNS.length; ci3++) {
+      var col2 = TEMPLATE_COLUMNS[ci3];
+      if (col2 === '下單日期' || col2 === '門店ID' || col2 === '門店名稱' || col2 === '電話' || col2 === '地址' || col2 === '備註' || col2 === '商家營業時間') continue;
+      var val2 = row2[col2];
+      if (val2 !== '' && val2 !== undefined && val2 !== null) {
+        var num2 = typeof val2 === 'number' ? val2 : parseInt(val2, 10);
+        if (!isNaN(num2) && num2 > 0) { totalOrders += num2; itemsWithOrders++; }
+      }
+    }
+  }
+
+  tripleShowStatus('success', '✅ 生成完成！共 ' + resultRows.length + ' 個門店，' + itemsWithOrders + ' 個品項，總數量 ' + totalOrders);
+
+  // 渲染預覽
+  var table = document.getElementById('triplePreviewTable');
+  var html = '<thead><tr>';
+  TEMPLATE_COLUMNS.forEach(function(col) { html += '<th>' + col + '</th>'; });
+  html += '</tr></thead><tbody>';
+  for (var ri3 = 0; ri3 < resultRows.length; ri3++) {
+    var row3 = resultRows[ri3];
+    html += '<tr>';
+    TEMPLATE_COLUMNS.forEach(function(col) {
+      var val = row3[col];
+      var isBase = (col === '下單日期' || col === '門店ID' || col === '門店名稱' || col === '電話' || col === '地址' || col === '備註' || col === '商家營業時間');
+      if (isBase) {
+        html += '<td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis">' + (val || '') + '</td>';
+      } else if (val !== '' && val !== undefined && val !== null) {
+        var num = typeof val === 'number' ? val : parseInt(val, 10);
+        if (!isNaN(num) && num > 0) {
+          html += '<td class="num-cell">' + val + '</td>';
+        } else {
+          html += '<td>' + val + '</td>';
+        }
+      } else {
+        html += '<td class="empty-cell">-</td>';
+      }
+    });
+    html += '</tr>';
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+  document.getElementById('triplePreviewCard').className = 'card visible';
+  document.getElementById('tripleBtnRow').className = 'btn-row visible';
+
+  tripleMergedData = resultRows;
+}
+
+async function exportTripleExcel() {
+  if (!tripleMergedData) return;
+  showProgress('正在生成 Excel...');
+  try {
+    var workbook = new ExcelJS.Workbook();
+    var sheet = workbook.addWorksheet('物料下單');
+    var columns = TEMPLATE_COLUMNS.map(function(col) {
+      return { header: col, key: col, width: col.length <= 3 ? 8 : (col.length <= 6 ? 12 : 18) };
+    });
+    columns[0].width = 20; columns[1].width = 14; columns[2].width = 30; columns[3].width = 16; columns[4].width = 40;
+    columns[22].width = 14; columns[25].width = 14; columns[26].width = 20; columns[27].width = 16;
+    sheet.columns = columns;
+
+    var headerRow = sheet.getRow(1);
+    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6366F1' } };
+    headerRow.alignment = { horizontal: 'center', vertical: 'middle' };
+    headerRow.height = 24;
+
+    for (var ri = 0; ri < tripleMergedData.length; ri++) {
+      var rowData = tripleMergedData[ri];
+      var rowArr = TEMPLATE_COLUMNS.map(function(col) {
+        var val = rowData[col];
+        if (val === '' || val === undefined || val === null) return null;
+        if (col === '下單日期' || col === '門店ID') return String(val);
+        var num = Number(val);
+        return isNaN(num) ? String(val) : num;
+      });
+      sheet.addRow(rowArr);
+    }
+
+    for (var i = 2; i <= sheet.rowCount; i++) {
+      var row = sheet.getRow(i);
+      row.eachCell(function(cell, colNumber) {
+        if (colNumber >= 6 && colNumber <= 26) {
+          cell.alignment = { horizontal: 'center' };
+          if (cell.value !== null && cell.value !== undefined) {
+            cell.font = { bold: true, color: { argb: 'FF4F46E5' } };
+          }
+        }
+        if (colNumber <= 2) cell.font = { size: 11 };
+      });
+    }
+
+    sheet.views = [{ state: 'frozen', ySplit: 1, xSplit: 0, activeCell: 'A2' }];
+    sheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: sheet.rowCount, column: TEMPLATE_COLUMNS.length }
+    };
+    headerRow.eachCell(function(cell) {
+      cell.border = { bottom: { style: 'medium', color: { argb: 'FF4338CA' } } };
+    });
+
+    var buffer = await workbook.xlsx.writeBuffer();
+    var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var now = new Date();
+    var dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+    a.href = url;
+    a.download = '物料底板' + dateStr + '.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    hideProgress();
+  } catch(err) {
+    hideProgress();
+    tripleShowStatus('error', '❌ 導出失敗：' + err.message);
+    console.error(err);
+  }
+}
+
+document.getElementById('tripleRunBtn').addEventListener('click', generateTripleBoard);
+document.getElementById('tripleResetBtn').addEventListener('click', function() {
+  document.getElementById('triplePasteArea').value = '';
+  tripleMergedData = null;
+  tripleVlData = null;
+  document.getElementById('triplePreviewTable').innerHTML = '';
+  document.getElementById('triplePreviewCard').className = 'card';
+  document.getElementById('tripleBtnRow').className = 'btn-row';
+  document.getElementById('tripleCapCard').className = 'card';
+  document.getElementById('tripleStatusCard').className = 'card';
+  vlDropZoneTriple.classList.remove('loaded');
+  document.getElementById('vlLoadedInfoTriple').style.display = 'none';
+  document.getElementById('vlFileInputTriple').value = '';
+});
+document.getElementById('tripleExportBtn').addEventListener('click', exportTripleExcel);
+</script>
+</body>
+</html>
