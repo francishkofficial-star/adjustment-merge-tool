@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel 商家訂單合併工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    padding: 20px;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 24px;
+    color: #1a73e8;
+  }
+  .drop-zone {
+    border: 3px dashed #ccc;
+    border-radius: 12px;
+    padding: 60px 20px;
+    text-align: center;
+    background: #fff;
+    transition: border-color 0.3s, background 0.3s;
+    cursor: pointer;
+    margin-bottom: 24px;
+  }
+  .drop-zone.dragover {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+  }
+  .drop-zone .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .drop-zone .hint {
+    color: #666;
+    font-size: 14px;
+  }
+  .file-info {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: none;
+  }
+  .file-info.show { display: block; }
+  .btn {
+    display: inline-block;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-right: 10px;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: #1a73e8; color: #fff; }
+  .btn-success { background: #34a853; color: #fff; }
+  .btn-danger { background: #ea4335; color: #fff; }
+  .btn:hover:not(:disabled) { opacity: 0.9; }
+  .controls {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .controls h3 {
+    margin-bottom: 12px;
+    font-size: 16px;
+    color: #444;
+  }
+  .control-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .control-row label {
+    font-size: 14px;
+    color: #555;
+  }
+  .control-row input[type="text"] {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 120px;
+  }
+  .result-panel {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: none;
+  }
+  .result-panel.show { display: block; }
+  .stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .stat-box {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px 16px;
+    min-width: 140px;
+  }
+  .stat-box .label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  .stat-box .value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #1a73e8;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 12px;
+  }
+  th, td {
+    border: 1px solid #e0e0e0;
+    padding: 8px 10px;
+    text-align: left;
+  }
+  th {
+    background: #f1f3f4;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+  }
+  tr:nth-child(even) { background: #fafafa; }
+  tr:hover { background: #e8f0fe; }
+  .merged-row { background: #e6f4ea !important; }
+  .scroll-table {
+    max-height: 500px;
+    overflow: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+  }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #333;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  .toast.show { opacity: 1; }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 12px 0;
+    display: none;
+  }
+  .progress-bar.show { display: block; }
+  .progress-bar .fill {
+    height: 100%;
+    background: #1a73e8;
+    width: 0%;
+    transition: width 0.3s;
+  }
+  .remark-preview {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #555;
+    max-height: 200px;
+    overflow: auto;
+  }
+  .remark-preview strong {
+    color: #333;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Excel 商家訂單合併工具</h1>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">📁</div>
+    <div class="hint">拖拽 Excel 文件到這裡，或點擊選擇文件</div>
+    <div class="hint" style="margin-top:8px; font-size:12px; color:#999;">支持 .xlsx / .xls / .csv</div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
+  </div>
+
+  <div class="file-info" id="fileInfo">
+    <strong>已選擇文件：</strong><span id="fileName"></span> &nbsp;|&nbsp;
+    <strong>行數：</strong><span id="rowCount">0</span> &nbsp;|&nbsp;
+    <strong>列數：</strong><span id="colCount">0</span>
+  </div>
+
+  <div class="controls" id="controls" style="display:none;">
+    <h3>處理選項</h3>
+    <div class="control-row">
+      <label>商家ID列名：</label>
+      <input type="text" id="idCol" value="商家ID" placeholder="例如：商家ID">
+      <label>數量列範圍（F-Q 對應的列名，用逗號分隔）：</label>
+      <input type="text" id="qtyCols" value="大膠袋,小膠袋,單杯無紡布袋,雙杯無紡布袋,3號無紡布袋,4號無紡布袋,紙袋,紙漿杯2托,紙漿杯托-4托,飲品封口紙,雙杯裝紙袋,單杯裝紙袋" style="width:500px;">
+    </div>
+    <div class="control-row">
+      <label>調賬費用列名：</label>
+      <input type="text" id="adjustCol" value="調賬費用">
+      <label>備註輸出列名（新增）：</label>
+      <input type="text" id="remarkCol" value="備註">
+    </div>
+    <div class="control-row">
+      <button class="btn btn-primary" id="btnMerge" onclick="processMerge()">開始合併</button>
+      <button class="btn btn-success" id="btnExport" onclick="exportExcel()" disabled>導出 Excel</button>
+      <button class="btn btn-danger" id="btnReset" onclick="resetAll()">重置</button>
+    </div>
+    <div class="progress-bar" id="progressBar">
+      <div class="fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <div class="result-panel" id="resultPanel">
+    <h3>處理結果</h3>
+    <div class="stats" id="stats"></div>
+    <div class="scroll-table" id="tableContainer"></div>
+    <div class="remark-preview" id="remarkPreview" style="display:none;">
+      <strong>備註預覽（前5行）：</strong>
+      <div id="remarkContent"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let rawData = [];
+let rawHeaders = [];
+let processedData = [];
+let processedHeaders = [];
+let fileName = '';
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+// Drag & drop events
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length) handleFile(files[0]);
+});
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function handleFile(file) {
+  fileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+      if (json.length < 2) {
+        showToast('文件內容為空或格式不正確');
+        return;
+      }
+      rawHeaders = json[0].map(h => String(h).trim());
+      rawData = json.slice(1).map(row => {
+        const obj = {};
+        rawHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? row[i] : ''; });
+        return obj;
+      });
+
+      document.getElementById('fileName').textContent = fileName;
+      document.getElementById('rowCount').textContent = rawData.length;
+      document.getElementById('colCount').textContent = rawHeaders.length;
+      document.getElementById('fileInfo').classList.add('show');
+      document.getElementById('controls').style.display = 'block';
+      showToast(`成功讀取 ${rawData.length} 行數據`);
+    } catch (err) {
+      showToast('讀取文件失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function setProgress(pct) {
+  const bar = document.getElementById('progressBar');
+  const fill = document.getElementById('progressFill');
+  bar.classList.add('show');
+  fill.style.width = pct + '%';
+  if (pct >= 100) setTimeout(() => bar.classList.remove('show'), 500);
+}
+
+function processMerge() {
+  if (!rawData.length) { showToast('請先上傳文件'); return; }
+
+  const idCol = document.getElementById('idCol').value.trim();
+  const adjustCol = document.getElementById('adjustCol').value.trim();
+  const remarkCol = document.getElementById('remarkCol').value.trim();
+  const qtyCols = document.getElementById('qtyCols').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Validate columns exist
+  if (!rawHeaders.includes(idCol)) { showToast(`找不到列「${idCol}」`); return; }
+  if (!rawHeaders.includes(adjustCol)) { showToast(`找不到列「${adjustCol}」`); return; }
+  const missingQty = qtyCols.filter(c => !rawHeaders.includes(c));
+  if (missingQty.length) { showToast(`找不到數量列：${missingQty.join(', ')}`); return; }
+
+  setProgress(10);
+
+  // Group by merchant ID
+  const groups = {};
+  rawData.forEach((row, idx) => {
+    const key = String(row[idCol] || '').trim();
+    if (!key) return;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push({ row, idx });
+  });
+  setProgress(30);
+
+  // Build merged rows
+  const merged = [];
+  const mergedIds = new Set();
+  let mergeCount = 0;
+
+  Object.keys(groups).forEach((mid, gi) => {
+    const items = groups[mid];
+    if (items.length > 1) {
+      mergeCount++;
+      mergedIds.add(mid);
+      // Use first row as base, keep earliest 下單時間 if exists
+      const base = JSON.parse(JSON.stringify(items[0].row));
+      // Find earliest date
+      const dateCol = rawHeaders.find(h => h.includes('時間') || h.includes('日期') || h.includes('Time'));
+      if (dateCol) {
+        const dates = items.map(it => it.row[dateCol]).filter(Boolean);
+        if (dates.length) {
+          // Try parse, keep earliest string
+          const sorted = dates.slice().sort();
+          base[dateCol] = sorted[0];
+        }
+      }
+      // Sum quantities
+      qtyCols.forEach(qc => {
+        let sum = 0;
+        items.forEach(it => {
+          const v = parseFloat(it.row[qc]);
+          if (!isNaN(v)) sum += v;
+        });
+        base[qc] = sum;
+      });
+      // Sum adjustment
+      let adjSum = 0;
+      items.forEach(it => {
+        const v = parseFloat(it.row[adjustCol]);
+        if (!isNaN(v)) adjSum += v;
+      });
+      base[adjustCol] = adjSum;
+      merged.push(base);
+    } else {
+      merged.push(JSON.parse(JSON.stringify(items[0].row)));
+    }
+  });
+  setProgress(60);
+
+  // Build remark for each row
+  const remarkRows = [];
+  merged.forEach(row => {
+    const parts = [];
+    qtyCols.forEach(qc => {
+      const v = parseFloat(row[qc]);
+      if (!isNaN(v) && v > 0) {
+        parts.push(`${qc}*${v}`);
+      }
+    });
+    row[remarkCol] = parts.join('，');
+    remarkRows.push(parts.join('，'));
+  });
+  setProgress(80);
+
+  // Build output headers: original + remark
+  processedHeaders = [...rawHeaders];
+  if (!processedHeaders.includes(remarkCol)) processedHeaders.push(remarkCol);
+
+  processedData = merged;
+  setProgress(100);
+
+  // Show stats
+  const statsEl = document.getElementById('stats');
+  statsEl.innerHTML = `
+    <div class="stat-box"><div class="label">原始行數</div><div class="value">${rawData.length}</div></div>
+    <div class="stat-box"><div class="label">合併後行數</div><div class="value">${processedData.length}</div></div>
+    <div class="stat-box"><div class="label">合併商家數</div><div class="value">${mergeCount}</div></div>
+    <div class="stat-box"><div class="label">新增備註列</div><div class="value">${remarkCol}</div></div>
+  `;
+
+  // Show table
+  renderTable(processedData, processedHeaders, idCol, mergedIds);
+
+  // Show remark preview
+  const rp = document.getElementById('remarkPreview');
+  const rc = document.getElementById('remarkContent');
+  rp.style.display = 'block';
+  rc.innerHTML = remarkRows.slice(0, 5).map((r, i) => `<div style="margin-bottom:4px;">行${i+1}：${r || '（無商品）'}</div>`).join('');
+
+  document.getElementById('resultPanel').classList.add('show');
+  document.getElementById('btnExport').disabled = false;
+  showToast('合併完成！');
+}
+
+function renderTable(data, headers, idCol, mergedIds) {
+  const container = document.getElementById('tableContainer');
+  let html = '<table><thead><tr>';
+  headers.forEach(h => { html += `<th>${escapeHtml(h)}</th>`; });
+  html += '</tr></thead><tbody>';
+  data.forEach((row, i) => {
+    const isMerged = mergedIds.has(String(row[idCol] || ''));
+    html += `<tr class="${isMerged ? 'merged-row' : ''}">`;
+    headers.forEach(h => {
+      const val = row[h];
+      let display = val !== undefined && val !== '' ? String(val) : '';
+      if (typeof val === 'number') display = val;
+      html += `<td>${escapeHtml(display)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function exportExcel() {
+  if (!processedData.length) { showToast('沒有數據可導出'); return; }
+
+  const wsData = [processedHeaders];
+  processedData.forEach(row => {
+    wsData.push(processedHeaders.map(h => row[h] !== undefined ? row[h] : ''));
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '合併結果');
+
+  // Auto-width
+  const colWidths = processedHeaders.map((h, i) => {
+    let max = String(h).length;
+    processedData.forEach(row => {
+      const v = String(row[h] || '');
+      if (v.length > max) max = v.length;
+    });
+    return { wch: Math.min(max + 4, 60) };
+  });
+  ws['!cols'] = colWidths;
+
+  // Freeze first row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+  const today = new Date().toISOString().slice(0, 10);
+  const outName = `商家訂單合併_${today}.xlsx`;
+  XLSX.writeFile(wb, outName);
+  showToast(`已導出：${outName}`);
+}
+
+function resetAll() {
+  rawData = [];
+  rawHeaders = [];
+  processedData = [];
+  processedHeaders = [];
+  fileName = '';
+  document.getElementById('fileInfo').classList.remove('show');
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('resultPanel').classList.remove('show');
+  document.getElementById('tableContainer').innerHTML = '';
+  document.getElementById('stats').innerHTML = '';
+  document.getElementById('remarkPreview').style.display = 'none';
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('fileInput').value = '';
+  showToast('已重置');
+}
+</script>
+</body>
+</html>

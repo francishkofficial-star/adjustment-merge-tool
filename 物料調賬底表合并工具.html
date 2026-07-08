@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物料調賬底表合并工具</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2d3748; min-height: 100vh; }
+
+  .header {
+    background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);
+    color: white;
+    padding: 24px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+  .header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 20px; }
+
+  .upload-section {
+    background: white;
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+  .upload-section h2 { font-size: 15px; font-weight: 600; color: #2b6cb0; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .drop-zone {
+    border: 2px dashed #90cdf4;
+    border-radius: 10px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f7fbff;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: #2b6cb0; background: #ebf4ff; }
+  .drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
+  .drop-zone p { color: #718096; font-size: 14px; }
+  .drop-zone p strong { color: #2b6cb0; }
+  .drop-zone input[type=file] { display: none; }
+  .file-info { margin-top: 12px; padding: 10px 14px; background: #ebf8ff; border-radius: 8px; font-size: 13px; color: #2c5282; display: none; }
+  .file-info.show { display: flex; align-items: center; gap: 8px; }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: #2b6cb0; color: white; }
+  .btn-primary:hover { background: #2c5282; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(43,108,176,0.3); }
+  .btn-success { background: #38a169; color: white; }
+  .btn-success:hover { background: #276749; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(56,161,105,0.3); }
+  .btn-secondary { background: #e2e8f0; color: #4a5568; }
+  .btn-secondary:hover { background: #cbd5e0; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid #4299e1;
+  }
+  .stat-card.green { border-left-color: #48bb78; }
+  .stat-card.orange { border-left-color: #ed8936; }
+  .stat-card.purple { border-left-color: #9f7aea; }
+  .stat-card .label { font-size: 12px; color: #718096; margin-bottom: 4px; }
+  .stat-card .value { font-size: 22px; font-weight: 700; color: #2d3748; }
+
+  .table-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: none;
+  }
+  .table-section.show { display: block; }
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .table-header h2 { font-size: 15px; font-weight: 600; color: #2b6cb0; }
+  .search-box {
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 220px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box:focus { border-color: #4299e1; }
+
+  .table-wrap { overflow-x: auto; max-height: 480px; overflow-y: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: #2b6cb0;
+    color: white;
+    padding: 10px 12px;
+    text-align: center;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  tbody tr { border-bottom: 1px solid #f0f4f8; }
+  tbody tr:hover { background: #ebf4ff !important; }
+  tbody tr:nth-child(even) { background: #f7fbff; }
+  tbody td { padding: 9px 12px; vertical-align: middle; }
+  tbody td.center { text-align: center; }
+  tbody td.num { text-align: center; font-weight: 600; }
+  tbody td.num.nonzero { color: #2b6cb0; }
+  tbody td.remark { color: #553c9a; font-size: 12px; max-width: 280px; }
+  tbody td.amount { text-align: center; font-weight: 700; color: #276749; }
+  .no-data { text-align: center; padding: 40px; color: #a0aec0; font-size: 14px; }
+
+  /* 分页 */
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+  }
+  .page-btn {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    color: #4a5568;
+    transition: all 0.15s;
+  }
+  .page-btn:hover { background: #ebf4ff; border-color: #4299e1; color: #2b6cb0; }
+  .page-btn.active { background: #2b6cb0; color: white; border-color: #2b6cb0; font-weight: 700; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-info { font-size: 13px; color: #718096; }
+
+  .progress-wrap { display: none; margin-top: 16px; }
+  .progress-wrap.show { display: block; }
+  .progress-bar-bg { background: #e2e8f0; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-bar { background: linear-gradient(90deg, #4299e1, #48bb78); height: 100%; border-radius: 99px; transition: width 0.3s; width: 0%; }
+  .progress-text { font-size: 12px; color: #718096; margin-top: 6px; }
+
+  .toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: #2d3748;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: #276749; }
+  .toast.error { background: #c53030; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    background: #ebf4ff;
+    color: #2b6cb0;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📦 物料調賬底表合并工具</h1>
+  <p>上傳未合并底表 → 自動按商家ID合并 → 金額求和 → 生成備註 → 導出Excel</p>
+</div>
+
+<div class="container">
+
+  <div class="upload-section">
+    <h2>📂 上傳文件</h2>
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📊</div>
+      <p><strong>點擊選擇</strong> 或拖拽 Excel 文件到此處</p>
+      <p style="margin-top:6px;font-size:12px;">支持 .xlsx / .xls 格式</p>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+    <div class="file-info" id="fileInfo">
+      <span>📄</span>
+      <span id="fileName"></span>
+    </div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-text" id="progressText">處理中...</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnProcess" disabled onclick="processFile()">
+        ⚡ 開始合并
+      </button>
+      <button class="btn btn-success" id="btnExport" disabled onclick="exportExcel()">
+        💾 導出 Excel
+      </button>
+      <button class="btn btn-secondary" onclick="resetAll()">
+        🔄 重置
+      </button>
+    </div>
+  </div>
+
+  <!-- 统计 -->
+  <div class="stats-row" id="statsRow" style="display:none;">
+    <div class="stat-card">
+      <div class="label">原始行數</div>
+      <div class="value" id="statOrig">-</div>
+    </div>
+    <div class="stat-card green">
+      <div class="label">合并後行數</div>
+      <div class="value" id="statMerged">-</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="label">合并筆數</div>
+      <div class="value" id="statDup">-</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="label">調賬費用總計</div>
+      <div class="value" id="statAmount">-</div>
+    </div>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-section" id="tableSection">
+    <div class="table-header">
+      <h2>📋 合并結果預覽 <span class="badge" id="rowCount">0 行</span></h2>
+      <input class="search-box" type="text" id="searchBox" placeholder="🔍 搜索商家ID / 名稱..." oninput="onSearch()">
+    </div>
+    <div class="table-wrap">
+      <table id="resultTable">
+        <thead id="tableHead"></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 全局 =====
+let mergedData = [];
+let filteredData = [];
+let originalRowCount = 0;
+let displayCols = [];
+
+// 分页
+const PAGE_SIZE = 50;
+let currentPage = 1;
+
+const MATERIAL_COLS = ['大膠袋','小膠袋','單杯無紡布袋','雙杯無紡布袋','3號無紡布袋','4號無紡布袋',
+                       '紙袋','紙漿杯2托','紙漿杯托-4托','飲品封口紙','雙杯裝紙袋','單杯裝紙袋'];
+const AMOUNT_COL = '調賬費用';
+const ID_COL = '商家ID';
+
+// ===== 拖拽上传 =====
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+function handleFile(file) {
+  if (!file.name.match(/\.(xlsx|xls)$/i)) {
+    showToast('請上傳 .xlsx 或 .xls 文件', 'error');
+    return;
+  }
+  document.getElementById('fileName').textContent = file.name + '  (' + (file.size / 1024).toFixed(1) + ' KB)';
+  document.getElementById('fileInfo').classList.add('show');
+  document.getElementById('btnProcess').disabled = false;
+  window._uploadedFile = file;
+  showToast('文件已加載，點擊「開始合并」處理');
+}
+
+// ===== 处理文件 =====
+function processFile() {
+  if (!window._uploadedFile) return;
+  setProgress(10, '讀取文件...');
+  document.getElementById('btnProcess').disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // 用 setTimeout 让进度条先渲染
+    setTimeout(() => {
+      try {
+        setProgress(30, '解析數據...');
+        const wb = XLSX.read(e.target.result, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(ws, { defval: 0 });
+
+        if (!raw.length) { showToast('文件無數據', 'error'); resetProgress(); return; }
+
+        setProgress(50, '按商家ID合并...');
+        originalRowCount = raw.length;
+
+        const groups = {};
+        const order = [];
+        raw.forEach(row => {
+          const id = String(row[ID_COL] || '').trim();
+          if (!groups[id]) {
+            groups[id] = {};
+            // 复制所有字段
+            Object.keys(row).forEach(k => { groups[id][k] = row[k]; });
+            MATERIAL_COLS.forEach(c => { groups[id][c] = Number(row[c]) || 0; });
+            groups[id][AMOUNT_COL] = Number(row[AMOUNT_COL]) || 0;
+            order.push(id);
+          } else {
+            MATERIAL_COLS.forEach(c => { groups[id][c] += Number(row[c]) || 0; });
+            groups[id][AMOUNT_COL] += Number(row[AMOUNT_COL]) || 0;
+          }
+        });
+
+        setProgress(70, '生成備註...');
+        mergedData = order.map(id => {
+          const row = groups[id];
+          const parts = MATERIAL_COLS
+            .filter(c => row[c] > 0)
+            .map(c => c + '*' + row[c]);
+          row['備註'] = parts.join('、');
+          return row;
+        });
+
+        // 确定列顺序
+        const allCols = Object.keys(mergedData[0]);
+        displayCols = allCols.filter(c => c !== '備註');
+        displayCols.push('備註');
+
+        setProgress(85, '渲染表格...');
+        filteredData = mergedData.slice();
+        currentPage = 1;
+
+        // 渲染表头（轻量）
+        renderHead();
+        renderStats();
+
+        // 用 setTimeout 分帧渲染表体，避免卡顿
+        setTimeout(() => {
+          renderPage();
+          document.getElementById('tableSection').classList.add('show');
+          setProgress(100, '完成！');
+          setTimeout(() => {
+            document.getElementById('progressWrap').classList.remove('show');
+            document.getElementById('btnProcess').disabled = false;
+            document.getElementById('btnExport').disabled = false;
+          }, 500);
+          showToast('合并完成！' + originalRowCount + ' 行 → ' + mergedData.length + ' 行', 'success');
+        }, 50);
+
+      } catch(err) {
+        showToast('解析失敗：' + err.message, 'error');
+        resetProgress();
+        document.getElementById('btnProcess').disabled = false;
+      }
+    }, 30);
+  };
+  reader.readAsArrayBuffer(window._uploadedFile);
+}
+
+// ===== 渲染表头 =====
+function renderHead() {
+  document.getElementById('tableHead').innerHTML =
+    '<tr>' + displayCols.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+  document.getElementById('rowCount').textContent = filteredData.length + ' 行';
+}
+
+// ===== 渲染当前页 =====
+function renderPage() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filteredData.slice(start, start + PAGE_SIZE);
+  const tbody = document.getElementById('tableBody');
+
+  if (!pageData.length) {
+    tbody.innerHTML = '<tr><td colspan="' + displayCols.length + '" class="no-data">無匹配數據</td></tr>';
+    renderPagination();
+    return;
+  }
+
+  // 用字符串拼接，比 DOM 操作快很多
+  let html = '';
+  pageData.forEach(row => {
+    html += '<tr>';
+    displayCols.forEach(col => {
+      const val = row[col];
+      if (col === '備註') {
+        html += '<td class="remark">' + (val || '') + '</td>';
+      } else if (col === AMOUNT_COL) {
+        html += '<td class="amount">HK$' + Number(val).toLocaleString() + '</td>';
+      } else if (MATERIAL_COLS.includes(col)) {
+        const n = Number(val) || 0;
+        html += '<td class="num' + (n > 0 ? ' nonzero' : '') + '">' + (n > 0 ? n : '-') + '</td>';
+      } else if (col === '下單時間' && val instanceof Date) {
+        html += '<td class="center">' + formatDate(val) + '</td>';
+      } else {
+        html += '<td>' + (val !== null && val !== undefined ? val : '') + '</td>';
+      }
+    });
+    html += '</tr>';
+  });
+  tbody.innerHTML = html;
+  renderPagination();
+}
+
+// ===== 分页控件 =====
+function renderPagination() {
+  const total = filteredData.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const pg = document.getElementById('pagination');
+
+  if (totalPages <= 1) { pg.innerHTML = ''; return; }
+
+  let html = '';
+  html += '<button class="page-btn" onclick="goPage(' + (currentPage-1) + ')" ' + (currentPage===1?'disabled':'') + '>‹ 上一頁</button>';
+
+  // 显示页码（最多显示7个）
+  let pages = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages = [1];
+    if (currentPage > 3) pages.push('...');
+    for (let i = Math.max(2, currentPage-1); i <= Math.min(totalPages-1, currentPage+1); i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+
+  pages.forEach(p => {
+    if (p === '...') {
+      html += '<span class="page-info">…</span>';
+    } else {
+      html += '<button class="page-btn' + (p===currentPage?' active':'') + '" onclick="goPage(' + p + ')">' + p + '</button>';
+    }
+  });
+
+  html += '<button class="page-btn" onclick="goPage(' + (currentPage+1) + ')" ' + (currentPage===totalPages?'disabled':'') + '>下一頁 ›</button>';
+  html += '<span class="page-info">共 ' + total + ' 行 / ' + totalPages + ' 頁</span>';
+  pg.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderPage();
+  // 滚动到表格顶部
+  document.getElementById('tableSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===== 搜索 =====
+function onSearch() {
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  filteredData = q
+    ? mergedData.filter(r =>
+        String(r[ID_COL] || '').toLowerCase().includes(q) ||
+        String(r['商家名稱'] || '').toLowerCase().includes(q) ||
+        String(r['備註'] || '').toLowerCase().includes(q)
+      )
+    : mergedData.slice();
+  currentPage = 1;
+  document.getElementById('rowCount').textContent = filteredData.length + ' 行';
+  renderPage();
+}
+
+// ===== 统计 =====
+function renderStats() {
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('statOrig').textContent = originalRowCount;
+  document.getElementById('statMerged').textContent = mergedData.length;
+  document.getElementById('statDup').textContent = originalRowCount - mergedData.length;
+  const total = mergedData.reduce((s, r) => s + (Number(r[AMOUNT_COL]) || 0), 0);
+  document.getElementById('statAmount').textContent = 'HK$' + total.toLocaleString();
+}
+
+// ===== 导出Excel =====
+function exportExcel() {
+  if (!mergedData.length) return;
+  const exportData = mergedData.map(row => {
+    const obj = {};
+    displayCols.forEach(c => { obj[c] = row[c]; });
+    return obj;
+  });
+
+  const ws = XLSX.utils.json_to_sheet(exportData, { header: displayCols });
+  const colWidths = displayCols.map(c => {
+    if (c === '收貨地址') return { wch: 40 };
+    if (c === '商家名稱') return { wch: 28 };
+    if (c === '備註') return { wch: 45 };
+    if (c === '下單時間') return { wch: 18 };
+    if (MATERIAL_COLS.includes(c)) return { wch: 10 };
+    return { wch: 14 };
+  });
+  ws['!cols'] = colWidths;
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '合并底表');
+
+  const today = new Date();
+  const dateStr = today.getFullYear() + '-' +
+    String(today.getMonth()+1).padStart(2,'0') + '-' +
+    String(today.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, '合并-物料調賬底表' + dateStr + '.xlsx');
+  showToast('導出成功！', 'success');
+}
+
+// ===== 工具函数 =====
+function formatDate(d) {
+  if (!d || !(d instanceof Date)) return d || '';
+  return d.getFullYear() + '/' +
+    String(d.getMonth()+1).padStart(2,'0') + '/' +
+    String(d.getDate()).padStart(2,'0') + ' ' +
+    String(d.getHours()).padStart(2,'0') + ':' +
+    String(d.getMinutes()).padStart(2,'0');
+}
+
+function setProgress(pct, text) {
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = text;
+}
+function resetProgress() {
+  document.getElementById('progressWrap').classList.remove('show');
+  document.getElementById('progressBar').style.width = '0%';
+}
+
+function resetAll() {
+  mergedData = []; filteredData = []; originalRowCount = 0; displayCols = [];
+  window._uploadedFile = null;
+  document.getElementById('fileInfo').classList.remove('show');
+  document.getElementById('fileName').textContent = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('btnProcess').disabled = true;
+  document.getElementById('btnExport').disabled = true;
+  document.getElementById('tableSection').classList.remove('show');
+  document.getElementById('statsRow').style.display = 'none';
+  document.getElementById('tableHead').innerHTML = '';
+  document.getElementById('tableBody').innerHTML = '';
+  document.getElementById('pagination').innerHTML = '';
+  document.getElementById('searchBox').value = '';
+  resetProgress();
+  showToast('已重置');
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+</script>
+</body>
+</html>

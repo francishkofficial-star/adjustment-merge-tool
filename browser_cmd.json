@@ -1,0 +1,1 @@
+{"action":"evaluate","script":"(function(){ const d=document.querySelector('iframe').contentDocument; const inps=d.querySelectorAll('input.form-control'); return JSON.stringify({v1:inps[1].value, v2:inps[2].value}); })()"}

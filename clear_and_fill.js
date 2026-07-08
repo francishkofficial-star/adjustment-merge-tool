@@ -1,0 +1,1 @@
+var textarea = document.querySelector('textarea'); textarea.focus(); var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set; nativeInputValueSetter.call(textarea, ''); textarea.dispatchEvent(new Event('input', {bubbles:true})); textarea.value;

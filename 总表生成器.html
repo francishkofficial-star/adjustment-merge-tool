@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>总表生成器</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+        .drop-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+        .drop-zone.dragover {
+            border-color: #764ba2;
+            background: #e8eaff;
+            transform: scale(1.02);
+        }
+        .drop-zone.loaded {
+            border-color: #28a745;
+            background: #e8f5e9;
+        }
+        .drop-zone-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        .drop-zone-text {
+            font-size: 18px;
+            color: #666;
+        }
+        .drop-zone-hint {
+            font-size: 14px;
+            color: #999;
+            margin-top: 10px;
+        }
+        .file-input {
+            display: none;
+        }
+        .info-box {
+            margin: 20px 0;
+            padding: 20px;
+            background: #e7f3ff;
+            border-radius: 10px;
+        }
+        .info-box h3 {
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+        .info-box ul {
+            margin-left: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 30px auto 0;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            word-break: break-all;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        .status.info {
+            background: #cce5ff;
+            color: #004085;
+            display: block;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+        .debug-info.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>总表生成器</h1>
+        
+        <div class="info-box">
+            <h3>列映射规则</h3>
+            <ul>
+                <li>A 提交日期：从文件名提取（如 20260615 → 2026-06-15）</li>
+                <li>B 訂單類型：根據備註判斷（含商城/問卷/售賣 → 售賣）</li>
+                <li>C 下單時間：物料A列</li>
+                <li>D 售賣/贈送：根據備註判斷（問卷 → 贈送，其他 → 售賣）</li>
+                <li>E 商家ID：物料B列</li>
+                <li>F 商家名稱：物料C列</li>
+                <li>G 收貨電話：物料D列</li>
+                <li>H 收貨地址：物料E列</li>
+                <li>I-AC：物料列（F-Z列）</li>
+            </ul>
+        </div>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📁</div>
+            <div class="drop-zone-text">拖拽物料订单Excel文件到这里</div>
+            <div class="drop-zone-hint">文件名需包含日期，如：物料订单_20260615.xlsx</div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" class="file-input">
+        
+        <button class="btn" id="generateBtn" disabled>开始生成</button>
+        
+        <div class="debug-info" id="debugInfo"></div>
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        let orderData = null;
+        let fileName = '';
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const status = document.getElementById('status');
+        const debugInfo = document.getElementById('debugInfo');
+
+        let debugLog = '';
+        function showDebug(msg) {
+            debugLog += msg + '\n';
+            debugInfo.textContent = debugLog;
+            debugInfo.classList.add('show');
+        }
+        
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            fileName = file.name;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const wb = XLSX.read(data, { type: 'array' });
+                    const sheetName = wb.SheetNames[0];
+                    const sheet = wb.Sheets[sheetName];
+                    orderData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    dropZone.classList.add('loaded');
+                    dropZone.querySelector('.drop-zone-text').textContent = '已加载: ' + file.name;
+                    
+                    showDebug('=== 物料订单 ===');
+                    showDebug('文件名: ' + fileName);
+                    showDebug('行数: ' + orderData.length);
+                    
+                    generateBtn.disabled = false;
+                    showStatus('文件加载成功，可以开始生成', 'info');
+                } catch (err) {
+                    showStatus('读取文件失败: ' + err.message, 'error');
+                    showDebug('错误: ' + err.stack);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        generateBtn.addEventListener('click', generateOutput);
+
+        function generateOutput() {
+            if (!orderData) {
+                showStatus('请先选择文件', 'error');
+                return;
+            }
+            
+            try {
+                showDebug('\n=== 开始生成 ===');
+                
+                // 从文件名提取日期
+                let submitDate = '';
+                const dateMatch = fileName.match(/(\d{8})/);
+                if (dateMatch) {
+                    const dateStr = dateMatch[1];
+                    submitDate = dateStr.slice(0,4) + '-' + dateStr.slice(4,6) + '-' + dateStr.slice(6,8);
+                }
+                showDebug('提交日期: ' + submitDate);
+                
+                // 物料数据行
+                const orderRows = orderData.slice(1);
+                showDebug('数据行数: ' + orderRows.length);
+                
+                // 准备输出数据
+                const outputData = [];
+                
+                // 处理每一行
+                orderRows.forEach((row, rowIndex) => {
+                    // 获取备注内容（AA列 = 索引26）
+                    let remark = String(row[26] || '').toLowerCase();
+                    
+                    // 判断订单类型和售卖/赠送
+                    let orderType = '';
+                    let sellOrGift = '';
+                    
+                    if (remark.includes('商城') || remark.includes('问卷') || remark.includes('售卖')) {
+                        orderType = '售卖';
+                        sellOrGift = '售卖';
+                    }
+                    if (remark.includes('问卷')) {
+                        sellOrGift = '赠送';
+                    }
+                    
+                    // 初始化新行（共29列：I-AC = 索引8-28，I是第9列所以实际是索引8开始）
+                    // A-H是索引0-7，I-Z是索引8-25，AA是索引26，AB是索引27
+                    const newRow = new Array(29).fill('');  // 共29列 A-AC
+                    
+                    // A(0): 提交日期
+                    newRow[0] = submitDate;
+                    
+                    // B(1): 訂單類型
+                    newRow[1] = orderType;
+                    
+                    // C(2): 下單時間
+                    newRow[2] = row[0] || '';
+                    
+                    // D(3): 售賣/贈送
+                    newRow[3] = sellOrGift;
+                    
+                    // E(4): 商家ID
+                    newRow[4] = row[1] || '';
+                    
+                    // F(5): 商家名稱
+                    newRow[5] = row[2] || '';
+                    
+                    // G(6): 收貨電話
+                    newRow[6] = row[3] || '';
+                    
+                    // H(7): 收貨地址
+                    newRow[7] = row[4] || '';
+                    
+                    // I-AC(8-28): 物料列（F-Z列，索引5-25）
+                    for (let i = 5; i <= 25; i++) {
+                        newRow[i + 3] = row[i] || '';  // 物料索引5 -> 总表索引8
+                    }
+                    
+                    outputData.push(newRow);
+                });
+                
+                showDebug('输出行数: ' + outputData.length);
+                
+                // 创建新工作表
+                const newWs = XLSX.utils.aoa_to_sheet(outputData);
+                
+                // 冻结首行
+                newWs['!freeze'] = { xSplit: 0, ySplit: 1 };
+                
+                // 自动筛选
+                newWs['!autofilter'] = { ref: 'A1:AC1' };
+                
+                // 列宽设置
+                const colWidths = outputData[0].map(() => ({ wch: 12 }));
+                newWs['!cols'] = colWidths;
+                
+                // 创建新工作簿
+                const newWb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(newWb, newWs, '总表');
+                
+                // 保存文件
+                const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+                XLSX.writeFile(newWb, `总表_${timestamp}.xlsx`);
+                
+                showDebug('=== 生成完成 ===');
+                showStatus('文件已生成！', 'success');
+            } catch (err) {
+                showStatus('生成失败: ' + err.message, 'error');
+                showDebug('错误详情: ' + err.stack);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物料調賬底表 - 合併工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
+    background: #f5f7fa;
+    color: #333;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+  }
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .controls input[type="file"] {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .controls button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    background: #3498db;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .controls button:hover { background: #2980b9; }
+  .controls button.export { background: #27ae60; }
+  .controls button.export:hover { background: #1e8449; }
+  .stats {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #666;
+    font-size: 14px;
+  }
+  .table-wrap {
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+  th, td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    font-size: 14px;
+  }
+  th {
+    background: #34495e;
+    color: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    white-space: nowrap;
+  }
+  tr:hover { background: #f0f4f8; }
+  td.amount { text-align: right; font-weight: 600; color: #e67e22; }
+  td.shop-id { font-family: monospace; font-weight: 600; color: #2c3e50; }
+  td.remark { color: #555; line-height: 1.5; }
+  .empty { text-align: center; padding: 40px; color: #999; }
+  .drag-area {
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    color: #888;
+    margin-bottom: 20px;
+    background: #fafbfc;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .drag-area.dragover {
+    border-color: #3498db;
+    background: #eaf5fb;
+  }
+</style>
+</head>
+<body>
+
+<h1>物料調賬底表 - 合併工具</h1>
+
+<div class="drag-area" id="dragArea">
+  <p>拖拽 .xlsx 文件到此處，或點擊選擇文件</p>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" style="margin-top:10px;">
+</div>
+
+<div class="controls">
+  <button onclick="processFile()">開始合併</button>
+  <button class="export" onclick="exportExcel()">導出 Excel</button>
+  <button class="export" style="background:#8e44ad;" onclick="exportCSV()">導出 CSV</button>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="table-wrap" id="tableWrap">
+  <div class="empty">請上傳 Excel 文件後點擊「開始合併」</div>
+</div>
+
+<!-- SheetJS for reading/writing Excel in browser -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<script>
+let rawData = [];
+let mergedData = [];
+let fileName = '';
+
+const dragArea = document.getElementById('dragArea');
+const fileInput = document.getElementById('fileInput');
+
+dragArea.addEventListener('click', () => fileInput.click());
+
+dragArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dragArea.classList.add('dragover');
+});
+dragArea.addEventListener('dragleave', () => dragArea.classList.remove('dragover'));
+dragArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragArea.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    fileInput.files = files;
+    fileName = files[0].name;
+    dragArea.querySelector('p').textContent = '已選擇: ' + fileName;
+  }
+});
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) {
+    fileName = fileInput.files[0].name;
+    dragArea.querySelector('p').textContent = '已選擇: ' + fileName;
+  }
+});
+
+function parseRemark(bz) {
+  const items = {};
+  if (!bz) return items;
+  const parts = String(bz).split(',');
+  for (let part of parts) {
+    part = part.trim();
+    const idx = part.lastIndexOf('*');
+    if (idx > 0) {
+      const name = part.substring(0, idx).trim();
+      const qty = parseInt(part.substring(idx + 1).trim(), 10) || 0;
+      items[name] = (items[name] || 0) + qty;
+    }
+  }
+  return items;
+}
+
+function buildRemark(items) {
+  const keys = Object.keys(items).sort();
+  return keys.map(k => k + '*' + items[k]).join(', ');
+}
+
+function processFile() {
+  if (!fileInput.files.length) {
+    alert('請先選擇一個 Excel 文件');
+    return;
+  }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+    if (json.length < 2) {
+      alert('文件內容為空或格式不正確');
+      return;
+    }
+    // Assume first row is header
+    const headers = json[0].map(h => String(h).trim());
+    const rows = json.slice(1);
+    rawData = [];
+    for (const row of rows) {
+      const obj = {};
+      for (let i = 0; i < headers.length; i++) {
+        obj[headers[i]] = row[i];
+      }
+      rawData.push(obj);
+    }
+    // Merge by Shop ID
+    const map = {};
+    for (const row of rawData) {
+      const sid = String(row['Shop ID'] || '').trim();
+      if (!sid) continue;
+      const amt = parseFloat(row['Amount']) || 0;
+      const bz = row['备注'] || '';
+      const currency = row['Currency'] || 'HKD';
+      if (!map[sid]) {
+        map[sid] = { 'Shop ID': sid, Amount: 0, Currency: currency, items: {} };
+      }
+      map[sid].Amount += amt;
+      const parsed = parseRemark(bz);
+      for (const k in parsed) {
+        map[sid].items[k] = (map[sid].items[k] || 0) + parsed[k];
+      }
+    }
+    mergedData = [];
+    for (const sid in map) {
+      mergedData.push({
+        'Shop ID': sid,
+        Amount: map[sid].Amount,
+        Currency: map[sid].Currency,
+        '备注': buildRemark(map[sid].items)
+      });
+    }
+    // Sort by Shop ID
+    mergedData.sort((a, b) => String(a['Shop ID']).localeCompare(String(b['Shop ID']), undefined, {numeric:true}));
+    renderTable();
+    document.getElementById('stats').textContent = `原始行數: ${rawData.length}  |  合併後行數: ${mergedData.length}`;
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderTable() {
+  if (!mergedData.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">無數據</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>Shop ID</th><th>Amount</th><th>Currency</th><th>備註</th></tr></thead><tbody>';
+  for (const row of mergedData) {
+    html += `<tr>
+      <td class="shop-id">${escapeHtml(row['Shop ID'])}</td>
+      <td class="amount">${row.Amount}</td>
+      <td>${escapeHtml(row.Currency)}</td>
+      <td class="remark">${escapeHtml(row['备注'])}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+function escapeHtml(text) {
+  if (text == null) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function exportExcel() {
+  if (!mergedData.length) { alert('無數據可導出'); return; }
+  const ws = XLSX.utils.json_to_sheet(mergedData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '合併後數據');
+  const dateStr = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `合併後-物料調賬底表-${dateStr}.xlsx`);
+}
+
+function exportCSV() {
+  if (!mergedData.length) { alert('無數據可導出'); return; }
+  const ws = XLSX.utils.json_to_sheet(mergedData);
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  const dateStr = new Date().toISOString().split('T')[0];
+  link.download = `合併後-物料調賬底表-${dateStr}.csv`;
+  link.click();
+}
+
+// Pre-load demo data if available (optional inline JSON)
+const PRELOADED_DATA = [];
+</script>
+
+</body>
+</html>

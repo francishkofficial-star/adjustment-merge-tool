@@ -1,0 +1,79 @@
+Budget template first 40 rows:
+                 验收中        待下单 Unnamed: 4
+0               三级类目        供应商       结算单位
+1           生物降解袋/胶袋       雄县立亚        CNY
+2            无纺布袋/布袋       重庆顶正        CNY
+3                 纸袋       天津海顺        CNY
+4         小票纸/打印纸/机纸       天津海顺        CNY
+5                 杯托        奉其奉        CNY
+6                硅油纸        奉其奉        CNY
+7          木质餐盒+普通餐盒        双翼嘉        CNY
+8         三合一/四合一/单筷        双翼嘉        CNY
+9               打包纸箱       浙江谦林        CNY
+10             海报/传单        当纳利        CNY
+11  推拉门贴/桌贴/自取门贴/橱窗贴        当纳利        CNY
+12           食安封签/腰封        当纳利        CNY
+13               营业牌        当纳利        CNY
+14              立式台卡        当纳利        CNY
+15      POS机（运费+MDM）      真唯/商米        USD
+16      POS机配件（适配器等）      真唯/商米        USD
+17              SIM卡   CMHK香港移动        HKD
+18          SIM卡（死约）       PCCW        USD
+19           licence      真唯/商米        USD
+20            技术售后维修      真唯/商米        USD
+21            人工翻新清洁  GGX/顺丰/菜鸟        HKD
+22            物流2025        GGX        HKD
+23             物流（新）      顺丰/菜鸟        HKD
+24              物料铺设      顺丰/菜鸟        HKD
+25     香港邦芒（菜单审核12人）         邦芒        HKD
+26   新城优品（Doumi驻场2人）      Doumi        HKD
+27              门店拍摄        TDK        HKD
+28              门店培训        ADE        HKD
+29          长沙外包（法度）         法度        CNY
+30           20万港币以下         南王    CNY/HKD
+31              高端物料          /          /
+32             功能性物料          /          /
+33      商城+定制+POS机赔偿         商家        HKD
+34       150HKD/月/商家         商家        HKD
+35               NaN        NaN        NaN
+
+Columns: ['1USD≈7.8HKD', 'Unnamed: 1', '验收中', '待下单', 'Unnamed: 4', 'Unnamed: 5', 'Unnamed: 6', 'Unnamed: 7', 'Unnamed: 8', 'Unnamed: 9', 'Unnamed: 10', 'Unnamed: 11', 'Unnamed: 12', 'Unnamed: 13', 'Unnamed: 14', 'Unnamed: 15', 'Unnamed: 16', 'Unnamed: 17', 'Unnamed: 18', 'Unnamed: 19', 'Unnamed: 20', 'Unnamed: 21', 'Unnamed: 22', 'Unnamed: 23']
+
+
+All rows (C, D, E columns):
+Row 1: C=三级类目, D=供应商, E=结算单位
+Row 2: C=生物降解袋/胶袋, D=雄县立亚, E=CNY
+Row 3: C=无纺布袋/布袋, D=重庆顶正, E=CNY
+Row 4: C=纸袋, D=天津海顺, E=CNY
+Row 5: C=小票纸/打印纸/机纸, D=天津海顺, E=CNY
+Row 6: C=杯托, D=奉其奉, E=CNY
+Row 7: C=硅油纸, D=奉其奉, E=CNY
+Row 8: C=木质餐盒+普通餐盒, D=双翼嘉, E=CNY
+Row 9: C=三合一/四合一/单筷, D=双翼嘉, E=CNY
+Row 10: C=打包纸箱, D=浙江谦林, E=CNY
+Row 11: C=海报/传单, D=当纳利, E=CNY
+Row 12: C=推拉门贴/桌贴/自取门贴/橱窗贴, D=当纳利, E=CNY
+Row 13: C=食安封签/腰封, D=当纳利, E=CNY
+Row 14: C=营业牌, D=当纳利, E=CNY
+Row 15: C=立式台卡, D=当纳利, E=CNY
+Row 16: C=POS机（运费+MDM）, D=真唯/商米, E=USD
+Row 17: C=POS机配件（适配器等）, D=真唯/商米, E=USD
+Row 18: C=SIM卡, D=CMHK香港移动, E=HKD
+Row 19: C=SIM卡（死约）, D=PCCW, E=USD
+Row 20: C=licence, D=真唯/商米, E=USD
+Row 21: C=技术售后维修, D=真唯/商米, E=USD
+Row 22: C=人工翻新清洁, D=GGX/顺丰/菜鸟, E=HKD
+Row 23: C=物流2025, D=GGX, E=HKD
+Row 24: C=物流（新）, D=顺丰/菜鸟, E=HKD
+Row 25: C=物料铺设, D=顺丰/菜鸟, E=HKD
+Row 26: C=香港邦芒（菜单审核12人）, D=邦芒, E=HKD
+Row 27: C=新城优品（Doumi驻场2人）, D=Doumi, E=HKD
+Row 28: C=门店拍摄, D=TDK, E=HKD
+Row 29: C=门店培训, D=ADE, E=HKD
+Row 30: C=长沙外包（法度）, D=法度, E=CNY
+Row 31: C=20万港币以下, D=南王, E=CNY/HKD
+Row 32: C=高端物料, D=/, E=/
+Row 33: C=功能性物料, D=/, E=/
+Row 34: C=商城+定制+POS机赔偿, D=商家, E=HKD
+Row 35: C=150HKD/月/商家, D=商家, E=HKD
+Row 36: C=nan, D=nan, E=nan

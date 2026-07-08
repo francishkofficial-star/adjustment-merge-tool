@@ -1,0 +1,1 @@
+var btns = document.querySelectorAll('button'); var result = []; btns.forEach(function(b,i){ result.push({i:i, text: JSON.stringify(b.textContent), cls:b.className}); }); JSON.stringify(result.slice(-5));

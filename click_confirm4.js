@@ -1,0 +1,1 @@
+var confirmBtn = document.querySelector('.ant-btn.ant-btn-primary'); if(confirmBtn){ confirmBtn.click(); '确定 clicked: ' + confirmBtn.textContent; } else { 'not found'; }

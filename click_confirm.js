@@ -1,0 +1,1 @@
+var btns = document.querySelectorAll('button'); var confirmBtn = null; btns.forEach(function(b){ if(b.textContent.trim() === '确定'){ confirmBtn = b; } }); if(confirmBtn){ confirmBtn.click(); '确定 clicked'; } else { 'not found, buttons: ' + Array.from(btns).map(function(b){return b.textContent.trim();}).join(','); }

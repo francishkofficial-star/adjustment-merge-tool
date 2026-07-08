@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var result = {}; [16,17,18,19].forEach(function(idx){ var q = items[idx]; var title = q.querySelector('.question-title, .title, h3, [class*="title"]'); result['q'+(idx+1)] = title ? title.textContent.substring(0,100) : 'no title'; }); JSON.stringify(result);

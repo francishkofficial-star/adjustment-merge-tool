@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var batchBtn = q.querySelector('.btn-add-option:nth-child(2)'); if(!batchBtn){ var btns = q.querySelectorAll('.btn-add-option'); batchBtn = btns[1]; } batchBtn.click(); 'clicked';

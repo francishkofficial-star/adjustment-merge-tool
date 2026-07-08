@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var allLinks = q.querySelectorAll('a, button, span, div'); var result = []; allLinks.forEach(function(el,i){ var t = el.textContent.trim(); if(t.indexOf('批量') >= 0 || t.indexOf('添加选项') >= 0){ result.push({i:i, tag:el.tagName, cls:el.className, text:t.substring(0,40)}); } }); JSON.stringify(result);

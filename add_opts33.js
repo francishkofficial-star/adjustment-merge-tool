@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var addBtns = q.querySelectorAll('.add-option, .add-item, [class*="add"]'); var result = []; addBtns.forEach(function(el,i){ result.push({i:i, cls:el.className, text:el.textContent.trim().substring(0,30)}); }); JSON.stringify(result);

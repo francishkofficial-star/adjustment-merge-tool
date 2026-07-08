@@ -1,0 +1,1650 @@
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>顺丰出库单处理工具</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 40px 48px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  /* ── Tab 切换 ── */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: #f0f2f5;
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #888;
+    transition: all 0.18s;
+    line-height: 1.3;
+  }
+
+  .tab-btn.active {
+    background: #fff;
+    color: #ff6b35;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .subtitle {
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 32px;
+    margin-top: 4px;
+  }
+
+  .steps {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .step {
+    flex: 1;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  .step strong {
+    display: block;
+    color: #ff6b35;
+    font-size: 11px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .drop-zone {
+    border: 2px dashed #d0d7de;
+    border-radius: 12px;
+    padding: 48px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafbfc;
+    position: relative;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: #ff6b35;
+    background: #fff8f5;
+  }
+
+  .drop-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .drop-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+  }
+
+  .drop-hint {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .file-selected {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: #f0faf0;
+    border: 1px solid #b7e4b7;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 16px;
+  }
+
+  .file-selected.show { display: flex; }
+
+  .file-icon { font-size: 24px; }
+
+  .file-info { flex: 1; min-width: 0; }
+
+  .file-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-size { font-size: 11px; color: #888; margin-top: 2px; }
+
+  .file-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 18px;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+
+  .file-remove:hover { color: #e53e3e; }
+
+  .btn {
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn:hover:not(:disabled) { opacity: 0.92; transform: translateY(-1px); }
+  .btn:active:not(:disabled) { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .progress-wrap {
+    display: none;
+    margin-top: 20px;
+  }
+
+  .progress-wrap.show { display: block; }
+
+  .progress-bar-bg {
+    background: #f0f0f0;
+    border-radius: 99px;
+    height: 6px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b35, #f7931e);
+    border-radius: 99px;
+    width: 0%;
+    transition: width 0.3s;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: #888;
+    margin-top: 8px;
+    text-align: center;
+  }
+
+  .result {
+    display: none;
+    margin-top: 20px;
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+
+  .result.success {
+    display: block;
+    background: #f0faf0;
+    border: 1px solid #b7e4b7;
+  }
+
+  .result.error {
+    display: block;
+    background: #fff5f5;
+    border: 1px solid #fca5a5;
+  }
+
+  .result-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .result.success .result-title { color: #16a34a; }
+  .result.error .result-title { color: #dc2626; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .stat-item {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .stat-label { font-size: 11px; color: #888; margin-bottom: 2px; }
+  .stat-value { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+
+  .download-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-decoration: none;
+  }
+
+  .download-btn:hover { opacity: 0.88; }
+
+  .error-msg {
+    font-size: 12px;
+    color: #dc2626;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .audit-wrap {
+    display: none;
+    margin-top: 16px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+
+  .audit-wrap.show { display: block; }
+
+  .audit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .audit-header.ok  { background: #f0faf0; color: #16a34a; }
+  .audit-header.warn { background: #fffbeb; color: #d97706; }
+  .audit-header.err  { background: #fff5f5; color: #dc2626; }
+
+  .audit-toggle { font-size: 11px; opacity: 0.7; }
+
+  .audit-body {
+    display: none;
+    background: #fff;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .audit-body.open { display: block; }
+
+  .audit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .audit-table th {
+    background: #f8f9fa;
+    padding: 6px 10px;
+    text-align: left;
+    color: #555;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+  }
+
+  .audit-table td {
+    padding: 5px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #333;
+    vertical-align: top;
+  }
+
+  .audit-table tr:last-child td { border-bottom: none; }
+
+  .audit-table .row-num { color: #888; width: 40px; }
+  .audit-table .reason  { color: #dc2626; }
+  .audit-table .warn-reason { color: #d97706; }
+
+  .erp-setting {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #e8eaed;
+  }
+
+  .erp-setting-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .erp-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .erp-preview {
+    font-size: 12px;
+    color: #888;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Courier New', monospace;
+  }
+
+  .erp-preview span {
+    color: #ff6b35;
+    font-weight: 700;
+  }
+
+  .erp-num-input {
+    width: 80px;
+    padding: 6px 10px;
+    border: 1.5px solid #d0d7de;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+    flex-shrink: 0;
+  }
+
+  .erp-num-input:focus {
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+  }
+
+  .erp-label {
+    font-size: 12px;
+    color: #888;
+    flex-shrink: 0;
+  }
+
+  .csp-info {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .csp-info span { color: #555; font-weight: 500; }
+
+  /* ── CSP 上传区域 ── */
+  .csp-upload-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1.5px solid #e2e8f0;
+    background: #fafbfc;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .csp-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #d1d5db;
+    transition: background 0.3s;
+  }
+
+  .csp-status-dot.ready   { background: #16a34a; }
+  .csp-status-dot.missing { background: #dc2626; }
+  .csp-status-dot.loading { background: #f59e0b; animation: pulse 1s infinite; }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.4; }
+  }
+
+  .csp-status-text {
+    font-size: 12px;
+    color: #555;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .csp-upload-btn {
+    padding: 5px 14px;
+    background: #ff6b35;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s;
+    flex-shrink: 0;
+  }
+
+  .csp-upload-btn:hover { opacity: 0.85; }
+  .csp-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">📦</div>
+    <h1>顺丰出库单处理工具</h1>
+  </div>
+  <p class="subtitle" style="margin-bottom:20px;">自动完成分区 + ERP编号 + 商品编码填写，或将物料订单模板转换为出库单</p>
+
+  <!-- CSP 文件状态条 -->
+  <div class="csp-upload-bar" id="cspBar" style="border-color: rgb(183, 228, 183);">
+    <div class="csp-status-dot ready" id="cspDot"></div>
+    <div class="csp-status-text" id="cspText">✅ CSP 文件已就绪，商品编码映射正常</div>
+    <input type="file" id="cspFileInput" accept=".xlsx" style="display:none;">
+    <button class="csp-upload-btn" id="cspUploadBtn" onclick="document.getElementById('cspFileInput').click()">重新上传</button>
+  </div>
+
+  <!-- Tab 切换 -->
+  <div class="tab-bar">
+    <button class="tab-btn" id="tab2Btn" onclick="switchTab(2)">🔄 物料模板转出库单</button>
+    <button class="tab-btn" id="tab1Btn" onclick="switchTab(1)">📄 出库单处理</button>
+    <button class="tab-btn active" id="tab3Btn" onclick="switchTab(3)">⚡ 一键处理</button>
+  </div>
+
+  <!-- ══════════════ Tab 1：出库单处理 ══════════════ -->
+  <div class="tab-panel" id="tab1Panel">
+    <div class="steps">
+      <div class="step">
+        <strong>步骤 1</strong>
+        R列重复/非重复分区，整行跟随移动
+      </div>
+      <div class="step">
+        <strong>步骤 2</strong>
+        填写F行号、G列ERP订单号、J列商品编码
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="position:absolute;left:-9999px;opacity:0;">
+
+    <div class="drop-zone" id="dropZone">
+      <span class="drop-icon">📄</span>
+      <div class="drop-title">拖拽出库单文件到此处</div>
+      <div class="drop-hint">或点击选择文件 · 支持 .xlsx 格式</div>
+    </div>
+
+    <div class="file-selected" id="fileSelected">
+      <span class="file-icon">📊</span>
+      <div class="file-info">
+        <div class="file-name" id="fileName"></div>
+        <div class="file-size" id="fileSize"></div>
+      </div>
+      <button class="file-remove" id="fileRemove" title="移除">✕</button>
+    </div>
+
+    <button class="btn" id="processBtn" disabled="">开始处理</button>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-label" id="progressLabel">正在处理中，请稍候…</div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="result-title" id="resultTitle"></div>
+      <div class="stats" id="statsGrid"></div>
+      <a class="download-btn" id="downloadBtn" href="#" download="">
+        ⬇️ 下载处理结果
+      </a>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+
+    <!-- 审查结果 -->
+    <div class="audit-wrap" id="auditWrap">
+      <div class="audit-header" id="auditHeader" onclick="toggleAudit()">
+        <span id="auditTitle">商品编码审查</span>
+        <span class="audit-toggle" id="auditToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="auditBody">
+        <table class="audit-table">
+          <thead><tr><th>行号</th><th>商品型号(AK)</th><th>商品编码(J)</th><th>问题说明</th></tr></thead>
+          <tbody id="auditTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 收方公司一致性检查 -->
+    <div class="audit-wrap" id="companyWrap">
+      <div class="audit-header" id="companyHeader" onclick="toggleCompany()">
+        <span id="companyTitle">收方公司一致性检查</span>
+        <span class="audit-toggle" id="companyToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="companyBody">
+        <table class="audit-table">
+          <thead><tr><th>收方公司(R)</th><th>涉及行号</th><th>冲突详情</th></tr></thead>
+          <tbody id="companyTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 特殊字符检查 -->
+    <div class="audit-wrap" id="specialWrap">
+      <div class="audit-header" id="specialHeader" onclick="toggleSpecial()">
+        <span id="specialTitle">特殊字符检查</span>
+        <span class="audit-toggle" id="specialToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="specialBody">
+        <table class="audit-table">
+          <thead><tr><th>行号</th><th>列</th><th>字符码</th><th>清除前（截断）</th><th>清除后（截断）</th></tr></thead>
+          <tbody id="specialTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ERP日期设置 -->
+    <div class="erp-setting">
+      <div class="erp-setting-title">📅 ERP订单号</div>
+      <div class="erp-row">
+        <div class="erp-label">Keeta-</div>
+        <input type="text" id="erpYear" class="erp-num-input" placeholder="2026" maxlength="4" style="width:64px;letter-spacing:1px;">
+        <div class="erp-label">-</div>
+        <input type="text" id="erpDate" class="erp-num-input" placeholder="0601" maxlength="4" style="width:64px;letter-spacing:2px;">
+        <div class="erp-label">-</div>
+        <input type="text" id="erpStartNum" class="erp-num-input" placeholder="0001" maxlength="4" style="width:64px;letter-spacing:2px;">
+      </div>
+      <div style="margin-top:8px;">
+        <div class="erp-label" style="display:inline;">预览：</div>
+        <div class="erp-preview" id="erpPreview" style="display:inline-block;margin-top:0;">Keeta-<span id="previewYear">2026</span>-<span id="previewDate">????</span>-<span id="previewStartNum">0001</span></div>
+      </div>
+    </div>
+
+  </div><!-- /tab1Panel -->
+
+  <!-- ══════════════ Tab 2：物料模板转出库单 ══════════════ -->
+  <div class="tab-panel" id="tab2Panel">
+    <div class="steps">
+      <div class="step">
+        <strong>输入</strong>
+        物料-订单模板（门店×商品数量表格）
+      </div>
+      <div class="step">
+        <strong>输出</strong>
+        顺丰出库单格式（每行一个商品，含编码）
+      </div>
+    </div>
+
+    <input type="file" id="cvFileInput" accept=".xlsx,.xls" style="position:absolute;left:-9999px;opacity:0;">
+
+    <div class="drop-zone" id="cvDropZone">
+      <span class="drop-icon">📋</span>
+      <div class="drop-title">拖拽物料订单模板到此处</div>
+      <div class="drop-hint">或点击选择文件 · 支持 .xlsx 格式</div>
+    </div>
+
+    <div class="file-selected" id="cvFileSelected">
+      <span class="file-icon">📊</span>
+      <div class="file-info">
+        <div class="file-name" id="cvFileName"></div>
+        <div class="file-size" id="cvFileSize"></div>
+      </div>
+      <button class="file-remove" id="cvFileRemove" title="移除">✕</button>
+    </div>
+
+    <button class="btn" id="cvBtn" disabled="">开始转换</button>
+
+    <div class="progress-wrap" id="cvProgressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="cvProgressBar"></div>
+      </div>
+      <div class="progress-label" id="cvProgressLabel">正在转换中，请稍候…</div>
+    </div>
+
+    <div class="result" id="cvResult">
+      <div class="result-title" id="cvResultTitle"></div>
+      <div class="stats" id="cvStatsGrid"></div>
+      <a class="download-btn" id="cvDownloadBtn" href="#" download="">
+        ⬇️ 下载顺丰出库单
+      </a>
+      <div class="error-msg" id="cvErrorMsg"></div>
+    </div>
+
+    <!-- 未映射商品提示 -->
+    <div class="audit-wrap" id="cvUnmappedWrap">
+      <div class="audit-header" id="cvUnmappedHeader" onclick="toggleCvUnmapped()">
+        <span id="cvUnmappedTitle">未映射商品列</span>
+        <span class="audit-toggle" id="cvUnmappedToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="cvUnmappedBody">
+        <table class="audit-table">
+          <thead><tr><th>#</th><th>物料表列头（繁体）</th><th>说明</th></tr></thead>
+          <tbody id="cvUnmappedTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="csp-info">
+      📋 映射规则：物料表列头 → CSP D列（Keeta物料模板-商品名称）→ B列（商品编码）→ C列（AK列商品名称）<br>
+      <span>无CSP映射的列（如玻璃門貼、優惠貼等）将跳过，不生成出库行</span>
+    </div>
+  </div><!-- /tab2Panel -->
+
+  <!-- ══════════════ Tab 3：一键处理 ══════════════ -->
+  <div class="tab-panel active" id="tab3Panel">
+    <div class="steps">
+      <div class="step">
+        <strong>输入</strong>
+        物料-订单模板（门店×商品数量表格）
+      </div>
+      <div class="step">
+        <strong>输出</strong>
+        已分区 + ERP编号 + 编码填充 + 审查完成的出库单
+      </div>
+    </div>
+
+    <input type="file" id="fpFileInput" accept=".xlsx,.xls" style="position:absolute;left:-9999px;opacity:0;">
+
+    <div class="drop-zone" id="fpDropZone">
+      <span class="drop-icon">⚡</span>
+      <div class="drop-title">拖拽物料订单模板到此处</div>
+      <div class="drop-hint">或点击选择文件 · 支持 .xlsx 格式</div>
+    </div>
+
+    <div class="file-selected" id="fpFileSelected">
+      <span class="file-icon">📊</span>
+      <div class="file-info">
+        <div class="file-name" id="fpFileName"></div>
+        <div class="file-size" id="fpFileSize"></div>
+      </div>
+      <button class="file-remove" id="fpFileRemove" title="移除">✕</button>
+    </div>
+
+    <button class="btn" id="fpBtn" disabled="">⚡ 一键处理</button>
+
+    <div class="progress-wrap" id="fpProgressWrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar" id="fpProgressBar"></div>
+      </div>
+      <div class="progress-label" id="fpProgressLabel">正在处理中，请稍候…</div>
+    </div>
+
+    <div class="result" id="fpResult">
+      <div class="result-title" id="fpResultTitle"></div>
+      <div class="stats" id="fpStatsGrid"></div>
+      <a class="download-btn" id="fpDownloadBtn" href="#" download="">
+        ⬇️ 下载最终出库单
+      </a>
+      <div class="error-msg" id="fpErrorMsg"></div>
+    </div>
+
+    <!-- 未映射商品提示 -->
+    <div class="audit-wrap" id="fpUnmappedWrap">
+      <div class="audit-header" id="fpUnmappedHeader" onclick="toggleFpUnmapped()">
+        <span id="fpUnmappedTitle">未映射商品列</span>
+        <span class="audit-toggle" id="fpUnmappedToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="fpUnmappedBody">
+        <table class="audit-table">
+          <thead><tr><th>#</th><th>物料表列头（繁体）</th><th>说明</th></tr></thead>
+          <tbody id="fpUnmappedTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 商品编码审查 -->
+    <div class="audit-wrap" id="fpAuditWrap">
+      <div class="audit-header" id="fpAuditHeader" onclick="toggleFpAudit()">
+        <span id="fpAuditTitle">商品编码审查</span>
+        <span class="audit-toggle" id="fpAuditToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="fpAuditBody">
+        <table class="audit-table">
+          <thead><tr><th>行号</th><th>商品型号(AK)</th><th>商品编码(J)</th><th>问题说明</th></tr></thead>
+          <tbody id="fpAuditTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 收方公司一致性检查 -->
+    <div class="audit-wrap" id="fpCompanyWrap">
+      <div class="audit-header" id="fpCompanyHeader" onclick="toggleFpCompany()">
+        <span id="fpCompanyTitle">收方公司一致性检查</span>
+        <span class="audit-toggle" id="fpCompanyToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="fpCompanyBody">
+        <table class="audit-table">
+          <thead><tr><th>收方公司(R)</th><th>涉及行号</th><th>冲突详情</th></tr></thead>
+          <tbody id="fpCompanyTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 特殊字符检查 -->
+    <div class="audit-wrap" id="fpSpecialWrap">
+      <div class="audit-header" id="fpSpecialHeader" onclick="toggleFpSpecial()">
+        <span id="fpSpecialTitle">特殊字符检查</span>
+        <span class="audit-toggle" id="fpSpecialToggle">▼ 展开</span>
+      </div>
+      <div class="audit-body" id="fpSpecialBody">
+        <table class="audit-table">
+          <thead><tr><th>行号</th><th>列</th><th>字符码</th><th>清除前（截断）</th><th>清除后（截断）</th></tr></thead>
+          <tbody id="fpSpecialTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ERP日期设置 -->
+    <div class="erp-setting">
+      <div class="erp-setting-title">📅 ERP订单号</div>
+      <div class="erp-row">
+        <div class="erp-label">Keeta-</div>
+        <input type="text" id="fpErpYear" class="erp-num-input" placeholder="2026" maxlength="4" style="width:64px;letter-spacing:1px;">
+        <div class="erp-label">-</div>
+        <input type="text" id="fpErpDate" class="erp-num-input" placeholder="0601" maxlength="4" style="width:64px;letter-spacing:2px;">
+        <div class="erp-label">-</div>
+        <input type="text" id="fpErpStartNum" class="erp-num-input" placeholder="0001" maxlength="4" style="width:64px;letter-spacing:2px;">
+      </div>
+      <div style="margin-top:8px;">
+        <div class="erp-label" style="display:inline;">预览：</div>
+        <div class="erp-preview" id="fpErpPreview" style="display:inline-block;margin-top:0;">Keeta-<span id="fpPreviewYear">2026</span>-<span id="fpPreviewDate">????</span>-<span id="fpPreviewStartNum">0001</span></div>
+      </div>
+    </div>
+
+  </div><!-- /tab3Panel -->
+
+</div>
+
+<script>
+  // ── Tab 切换 ──
+  function switchTab(n) {
+    document.getElementById('tab1Panel').classList.toggle('active', n === 1);
+    document.getElementById('tab2Panel').classList.toggle('active', n === 2);
+    document.getElementById('tab3Panel').classList.toggle('active', n === 3);
+    document.getElementById('tab1Btn').classList.toggle('active', n === 1);
+    document.getElementById('tab2Btn').classList.toggle('active', n === 2);
+    document.getElementById('tab3Btn').classList.toggle('active', n === 3);
+  }
+
+  // ── 工具函数 ──
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(2) + ' MB';
+  }
+
+  // ════════════════════════════════════════
+  //  Tab 1：出库单处理
+  // ════════════════════════════════════════
+  function toggleAudit() {
+    const body   = document.getElementById('auditBody');
+    const toggle = document.getElementById('auditToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+
+  function toggleCompany() {
+    const body   = document.getElementById('companyBody');
+    const toggle = document.getElementById('companyToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+
+  function toggleSpecial() {
+    const body   = document.getElementById('specialBody');
+    const toggle = document.getElementById('specialToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+
+  let selectedFile = null;
+  let downloadUrl = null;
+
+  const erpYear = document.getElementById('erpYear');
+  const erpDate = document.getElementById('erpDate');
+  const previewYear = document.getElementById('previewYear');
+  const previewDate = document.getElementById('previewDate');
+
+  function extractFromName(name) {
+    const m = name.match(/(\d{4})(\d{4})/);
+    if (m) return { year: m[1], date: m[2] };
+    return { year: '', date: '' };
+  }
+
+  const erpStartNum    = document.getElementById('erpStartNum');
+  const previewStartNum = document.getElementById('previewStartNum');
+
+  function padStart4(v) {
+    const n = parseInt(v, 10);
+    if (isNaN(n) || n < 1) return '0001';
+    return String(n).padStart(4, '0');
+  }
+
+  function updateErpPreview() {
+    previewYear.textContent     = erpYear.value.trim() || '????';
+    previewDate.textContent     = erpDate.value.trim() || '????';
+    previewStartNum.textContent = erpStartNum.value.trim() ? padStart4(erpStartNum.value.trim()) : '0001';
+  }
+
+  erpYear.addEventListener('input', updateErpPreview);
+  erpDate.addEventListener('input', updateErpPreview);
+  erpStartNum.addEventListener('input', updateErpPreview);
+  erpYear.addEventListener('input', () => {
+    if (erpYear.value.trim().length === 4) erpDate.focus();
+  });
+  erpDate.addEventListener('input', () => {
+    if (erpDate.value.trim().length === 4) erpStartNum.focus();
+  });
+
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const fileSelected = document.getElementById('fileSelected');
+  const fileName    = document.getElementById('fileName');
+  const fileSize    = document.getElementById('fileSize');
+  const fileRemove  = document.getElementById('fileRemove');
+  const processBtn  = document.getElementById('processBtn');
+  const progressWrap = document.getElementById('progressWrap');
+  const progressBar  = document.getElementById('progressBar');
+  const progressLabel = document.getElementById('progressLabel');
+  const result      = document.getElementById('result');
+  const resultTitle = document.getElementById('resultTitle');
+  const statsGrid   = document.getElementById('statsGrid');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const errorMsg    = document.getElementById('errorMsg');
+
+  function setFile(file) {
+    if (!file) return;
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatSize(file.size);
+    fileSelected.classList.add('show');
+    processBtn.disabled = false;
+    result.className = 'result';
+    if (downloadUrl) { URL.revokeObjectURL(downloadUrl); downloadUrl = null; }
+    const auto = extractFromName(file.name);
+    if (auto.year && !erpYear.value.trim()) erpYear.value = auto.year;
+    if (auto.date && !erpDate.value.trim()) erpDate.value = auto.date;
+    updateErpPreview();
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    fileInput.value = '';
+    fileSelected.classList.remove('show');
+    processBtn.disabled = true;
+    result.className = 'result';
+    if (downloadUrl) { URL.revokeObjectURL(downloadUrl); downloadUrl = null; }
+  }
+
+  function onFileInputChange() {
+    if (fileInput.files && fileInput.files[0]) setFile(fileInput.files[0]);
+  }
+  fileInput.addEventListener('change', onFileInputChange);
+  fileInput.addEventListener('input', onFileInputChange);
+
+  let lastFileName = '';
+  setInterval(() => {
+    if (fileInput.files && fileInput.files[0]) {
+      const f = fileInput.files[0];
+      if (f.name !== lastFileName) { lastFileName = f.name; setFile(f); }
+    }
+  }, 300);
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileRemove.addEventListener('click', e => { e.stopPropagation(); clearFile(); });
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) setFile(file);
+    else alert('请上传 .xlsx 格式的文件');
+  });
+
+  processBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    processBtn.disabled = true;
+    progressWrap.classList.add('show');
+    result.className = 'result';
+    progressBar.style.width = '30%';
+    progressLabel.textContent = '正在上传文件…';
+
+    const formData = new FormData();
+    formData.append('file', selectedFile, selectedFile.name);
+    formData.append('erp_year', erpYear.value.trim());
+    formData.append('erp_date', erpDate.value.trim());
+    formData.append('start_num', erpStartNum.value.trim() ? padStart4(erpStartNum.value.trim()) : '1');
+
+    try {
+      progressBar.style.width = '60%';
+      progressLabel.textContent = '正在处理数据…';
+      const resp = await fetch('/process', { method: 'POST', body: formData });
+      progressBar.style.width = '90%';
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({ error: resp.statusText }));
+        throw new Error(errData.error || '服务器错误');
+      }
+      const statsB64 = resp.headers.get('X-Stats-B64');
+      const stats = statsB64 ? JSON.parse(atob(statsB64)) : {};
+      const blob = await resp.blob();
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+      downloadUrl = URL.createObjectURL(blob);
+      const outName = '顺丰出库单' + new Date().toISOString().slice(0,10) + '.xlsx';
+      downloadBtn.href = downloadUrl;
+      downloadBtn.download = outName;
+      progressBar.style.width = '100%';
+      progressLabel.textContent = '处理完成！';
+
+      const vlookupHit = stats.vlookup_hit || 0;
+      const vlookupMiss = stats.vlookup_miss || [];
+      const vlookupLoaded = stats.vlookup_loaded;
+      statsGrid.innerHTML = `
+        <div class="stat-item"><div class="stat-label">总行数</div><div class="stat-value">${stats.total || '-'}</div></div>
+        <div class="stat-item"><div class="stat-label">重复ID行数</div><div class="stat-value">${stats.dup_rows || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">非重复ID行数</div><div class="stat-value">${stats.single_rows || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">ERP编号数</div><div class="stat-value">${stats.erp_count || 0}</div></div>
+        ${vlookupLoaded ? `<div class="stat-item"><div class="stat-label">门店信息命中</div><div class="stat-value" style="color:${vlookupHit>0?'#16a34a':'#dc2626'}">${vlookupHit}</div></div>` : ''}
+        ${vlookupLoaded && vlookupMiss.length > 0 ? `<div class="stat-item"><div class="stat-label">未命中门店</div><div class="stat-value" style="color:#d97706">${vlookupMiss.length}</div></div>` : ''}
+      `;
+      // 未命中门店提示
+      if (vlookupLoaded && vlookupMiss.length > 0) {
+        const missDiv = document.createElement('div');
+        missDiv.style.cssText = 'margin-top:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;';
+        missDiv.innerHTML = `⚠️ 以下 ${vlookupMiss.length} 个门店ID在门店信息表中未找到，收方信息未填充：<br><span style="font-family:monospace;">${vlookupMiss.join('、')}</span>`;
+        document.getElementById('result').appendChild(missDiv);
+      }
+
+      const auditWrap   = document.getElementById('auditWrap');
+      const auditHeader = document.getElementById('auditHeader');
+      const auditTitle  = document.getElementById('auditTitle');
+      const auditTbody  = document.getElementById('auditTbody');
+      const errors  = stats.audit_errors  || [];
+      const missing = stats.audit_missing || [];
+      const allIssues = [...errors, ...missing].sort((a,b) => a.row - b.row);
+      auditWrap.classList.add('show');
+      auditTbody.innerHTML = '';
+      if (allIssues.length === 0) {
+        auditHeader.className = 'audit-header ok';
+        auditTitle.textContent = '✅ 商品编码审查通过，所有型号与编码一一对应';
+      } else {
+        const errCount  = errors.length;
+        const missCount = missing.length;
+        const parts = [];
+        if (errCount)  parts.push(`${errCount} 处对应错误`);
+        if (missCount) parts.push(`${missCount} 处找不到编码`);
+        auditHeader.className = errCount > 0 ? 'audit-header err' : 'audit-header warn';
+        auditTitle.textContent = `⚠️ 商品编码审查发现问题：${parts.join('，')}`;
+        allIssues.forEach(item => {
+          const isMissing = !item.j;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${item.row}</td><td>${item.ak||'-'}</td><td>${item.j||'-'}</td><td class="${isMissing?'warn-reason':'reason'}">${item.reason}</td>`;
+          auditTbody.appendChild(tr);
+        });
+        document.getElementById('auditBody').classList.add('open');
+        document.getElementById('auditToggle').textContent = '▲ 收起';
+      }
+      // ── 收方公司一致性 ──
+      const companyWrap   = document.getElementById('companyWrap');
+      const companyHeader = document.getElementById('companyHeader');
+      const companyTitle  = document.getElementById('companyTitle');
+      const companyTbody  = document.getElementById('companyTbody');
+      const companyBody   = document.getElementById('companyBody');
+      const conflicts = stats.company_conflicts || [];
+      companyWrap.classList.add('show');
+      companyTbody.innerHTML = '';
+      if (conflicts.length === 0) {
+        companyHeader.className = 'audit-header ok';
+        companyTitle.textContent = '✅ 收方公司一致性检查通过，手机号与地址均无冲突';
+      } else {
+        companyHeader.className = 'audit-header warn';
+        companyTitle.textContent = `⚠️ 发现 ${conflicts.length} 个收方公司存在手机/地址不一致`;
+        conflicts.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.company}</td><td style="font-size:11px;color:#888;">第 ${item.rows.join('、') } 行</td><td class="warn-reason">${item.detail}</td>`;
+          companyTbody.appendChild(tr);
+        });
+        companyBody.classList.add('open');
+        document.getElementById('companyToggle').textContent = '▲ 收起';
+      }
+
+      // ── 特殊字符 ──
+      const specialWrap   = document.getElementById('specialWrap');
+      const specialHeader = document.getElementById('specialHeader');
+      const specialTitle  = document.getElementById('specialTitle');
+      const specialTbody  = document.getElementById('specialTbody');
+      const specialBody   = document.getElementById('specialBody');
+      const specials = stats.special_chars || [];
+      specialWrap.classList.add('show');
+      specialTbody.innerHTML = '';
+      if (specials.length === 0) {
+        specialHeader.className = 'audit-header ok';
+        specialTitle.textContent = '✅ 未发现特殊字符';
+      } else {
+        specialHeader.className = 'audit-header warn';
+        specialTitle.textContent = `⚠️ 发现 ${specials.length} 处特殊字符，请检查`;
+        specials.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${item.row}</td><td>${item.col}</td><td style="font-family:monospace;">${item.char_code}</td><td class="warn-reason" style="word-break:break-all;">${(item.original||item.value||'').replace(/</g,'&lt;')}</td><td style="word-break:break-all;color:#16a34a;">${(item.cleaned||'').replace(/</g,'&lt;')}</td>`;
+          specialTbody.appendChild(tr);
+        });
+        specialBody.classList.add('open');
+        document.getElementById('specialToggle').textContent = '▲ 收起';
+      }
+
+      result.className = 'result success';
+      resultTitle.textContent = '✅ 处理成功！点击下方按钮下载文件';
+      errorMsg.textContent = '';
+      setTimeout(() => { progressWrap.classList.remove('show'); progressBar.style.width = '0%'; }, 800);
+    } catch (err) {
+      progressBar.style.width = '100%';
+      result.className = 'result error';
+      resultTitle.textContent = '❌ 处理失败';
+      statsGrid.innerHTML = '';
+      errorMsg.textContent = err.message;
+      progressWrap.classList.remove('show');
+      progressBar.style.width = '0%';
+    } finally {
+      processBtn.disabled = false;
+    }
+  });
+
+  // ════════════════════════════════════════
+  //  Tab 2：物料模板转出库单
+  // ════════════════════════════════════════
+  function toggleCvUnmapped() {
+    const body   = document.getElementById('cvUnmappedBody');
+    const toggle = document.getElementById('cvUnmappedToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+
+  let cvSelectedFile = null;
+  let cvDownloadUrl  = null;
+
+  const cvDropZone    = document.getElementById('cvDropZone');
+  const cvFileInput   = document.getElementById('cvFileInput');
+  const cvFileSelected = document.getElementById('cvFileSelected');
+  const cvFileName    = document.getElementById('cvFileName');
+  const cvFileSize    = document.getElementById('cvFileSize');
+  const cvFileRemove  = document.getElementById('cvFileRemove');
+  const cvBtn         = document.getElementById('cvBtn');
+  const cvProgressWrap = document.getElementById('cvProgressWrap');
+  const cvProgressBar  = document.getElementById('cvProgressBar');
+  const cvProgressLabel = document.getElementById('cvProgressLabel');
+  const cvResult      = document.getElementById('cvResult');
+  const cvResultTitle = document.getElementById('cvResultTitle');
+  const cvStatsGrid   = document.getElementById('cvStatsGrid');
+  const cvDownloadBtn = document.getElementById('cvDownloadBtn');
+  const cvErrorMsg    = document.getElementById('cvErrorMsg');
+
+  function cvSetFile(file) {
+    if (!file) return;
+    cvSelectedFile = file;
+    cvFileName.textContent = file.name;
+    cvFileSize.textContent = formatSize(file.size);
+    cvFileSelected.classList.add('show');
+    cvBtn.disabled = false;
+    cvResult.className = 'result';
+    if (cvDownloadUrl) { URL.revokeObjectURL(cvDownloadUrl); cvDownloadUrl = null; }
+  }
+
+  function cvClearFile() {
+    cvSelectedFile = null;
+    cvFileInput.value = '';
+    cvFileSelected.classList.remove('show');
+    cvBtn.disabled = true;
+    cvResult.className = 'result';
+    if (cvDownloadUrl) { URL.revokeObjectURL(cvDownloadUrl); cvDownloadUrl = null; }
+  }
+
+  function onCvFileInputChange() {
+    if (cvFileInput.files && cvFileInput.files[0]) cvSetFile(cvFileInput.files[0]);
+  }
+  cvFileInput.addEventListener('change', onCvFileInputChange);
+  cvFileInput.addEventListener('input', onCvFileInputChange);
+
+  let cvLastFileName = '';
+  setInterval(() => {
+    if (cvFileInput.files && cvFileInput.files[0]) {
+      const f = cvFileInput.files[0];
+      if (f.name !== cvLastFileName) { cvLastFileName = f.name; cvSetFile(f); }
+    }
+  }, 300);
+
+  cvDropZone.addEventListener('click', () => cvFileInput.click());
+  cvFileRemove.addEventListener('click', e => { e.stopPropagation(); cvClearFile(); });
+  cvDropZone.addEventListener('dragover', e => { e.preventDefault(); cvDropZone.classList.add('drag-over'); });
+  cvDropZone.addEventListener('dragleave', () => cvDropZone.classList.remove('drag-over'));
+  cvDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    cvDropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) cvSetFile(file);
+    else alert('请上传 .xlsx 格式的文件');
+  });
+
+  // ════════════════════════════════════════
+  //  CSP 文件状态检测 & 上传
+  // ════════════════════════════════════════
+  const cspDot       = document.getElementById('cspDot');
+  const cspText      = document.getElementById('cspText');
+  const cspUploadBtn = document.getElementById('cspUploadBtn');
+  const cspFileInput = document.getElementById('cspFileInput');
+  const cspBar       = document.getElementById('cspBar');
+
+  function setCspStatus(state, msg) {
+    cspDot.className = 'csp-status-dot ' + state;
+    cspText.textContent = msg;
+    // 如果已就绪，把上传按钮改为"重新上传"
+    cspUploadBtn.textContent = state === 'ready' ? '重新上传' : '上传 CSP 文件';
+    cspBar.style.borderColor = state === 'ready' ? '#b7e4b7' : state === 'missing' ? '#fca5a5' : '#e2e8f0';
+  }
+
+  async function checkCspStatus() {
+    setCspStatus('loading', '正在检测 CSP 文件…');
+    try {
+      const r = await fetch('/csp-status');
+      const d = await r.json();
+      if (d.ready) {
+        setCspStatus('ready', '✅ CSP 文件已就绪，商品编码映射正常');
+      } else {
+        setCspStatus('missing', '⚠️ 未找到 CSP 文件，请上传后才能使用商品编码功能');
+      }
+    } catch (e) {
+      setCspStatus('missing', '无法连接服务器');
+    }
+  }
+
+  cspFileInput.addEventListener('change', async () => {
+    const file = cspFileInput.files && cspFileInput.files[0];
+    if (!file) return;
+    setCspStatus('loading', `正在上传 ${file.name}…`);
+    cspUploadBtn.disabled = true;
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    try {
+      const r = await fetch('/upload-csp', { method: 'POST', body: fd });
+      const d = await r.json();
+      if (d.ok) {
+        setCspStatus('ready', '✅ CSP 文件上传成功，商品编码映射已更新');
+      } else {
+        setCspStatus('missing', '上传失败：' + (d.error || '未知错误'));
+      }
+    } catch (e) {
+      setCspStatus('missing', '上传出错：' + e.message);
+    } finally {
+      cspUploadBtn.disabled = false;
+      cspFileInput.value = '';
+    }
+  });
+
+  // 页面加载时自动检测
+  checkCspStatus();
+
+  // ════════════════════════════════════════
+  //  Tab 3：一键处理
+  // ════════════════════════════════════════
+  function toggleFpUnmapped() {
+    const body   = document.getElementById('fpUnmappedBody');
+    const toggle = document.getElementById('fpUnmappedToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+  function toggleFpAudit() {
+    const body   = document.getElementById('fpAuditBody');
+    const toggle = document.getElementById('fpAuditToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+  function toggleFpCompany() {
+    const body   = document.getElementById('fpCompanyBody');
+    const toggle = document.getElementById('fpCompanyToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+  function toggleFpSpecial() {
+    const body   = document.getElementById('fpSpecialBody');
+    const toggle = document.getElementById('fpSpecialToggle');
+    const open   = body.classList.toggle('open');
+    toggle.textContent = open ? '▲ 收起' : '▼ 展开';
+  }
+
+  let fpSelectedFile = null;
+  let fpDownloadUrl  = null;
+
+  const fpErpYear    = document.getElementById('fpErpYear');
+  const fpErpDate    = document.getElementById('fpErpDate');
+  const fpPreviewYear = document.getElementById('fpPreviewYear');
+  const fpPreviewDate = document.getElementById('fpPreviewDate');
+
+  const fpErpStartNum    = document.getElementById('fpErpStartNum');
+  const fpPreviewStartNum = document.getElementById('fpPreviewStartNum');
+
+  function updateFpErpPreview() {
+    fpPreviewYear.textContent     = fpErpYear.value.trim() || '????';
+    fpPreviewDate.textContent     = fpErpDate.value.trim() || '????';
+    fpPreviewStartNum.textContent = fpErpStartNum.value.trim() ? padStart4(fpErpStartNum.value.trim()) : '0001';
+  }
+  fpErpYear.addEventListener('input', updateFpErpPreview);
+  fpErpDate.addEventListener('input', updateFpErpPreview);
+  fpErpStartNum.addEventListener('input', updateFpErpPreview);
+  fpErpYear.addEventListener('input', () => {
+    if (fpErpYear.value.trim().length === 4) fpErpDate.focus();
+  });
+  fpErpDate.addEventListener('input', () => {
+    if (fpErpDate.value.trim().length === 4) fpErpStartNum.focus();
+  });
+
+  const fpDropZone     = document.getElementById('fpDropZone');
+  const fpFileInput    = document.getElementById('fpFileInput');
+  const fpFileSelected = document.getElementById('fpFileSelected');
+  const fpFileName     = document.getElementById('fpFileName');
+  const fpFileSize     = document.getElementById('fpFileSize');
+  const fpFileRemove   = document.getElementById('fpFileRemove');
+  const fpBtn          = document.getElementById('fpBtn');
+  const fpProgressWrap = document.getElementById('fpProgressWrap');
+  const fpProgressBar  = document.getElementById('fpProgressBar');
+  const fpProgressLabel = document.getElementById('fpProgressLabel');
+  const fpResult       = document.getElementById('fpResult');
+  const fpResultTitle  = document.getElementById('fpResultTitle');
+  const fpStatsGrid    = document.getElementById('fpStatsGrid');
+  const fpDownloadBtn  = document.getElementById('fpDownloadBtn');
+  const fpErrorMsg     = document.getElementById('fpErrorMsg');
+
+  function fpSetFile(file) {
+    if (!file) return;
+    fpSelectedFile = file;
+    fpFileName.textContent = file.name;
+    fpFileSize.textContent = formatSize(file.size);
+    fpFileSelected.classList.add('show');
+    fpBtn.disabled = false;
+    fpResult.className = 'result';
+    if (fpDownloadUrl) { URL.revokeObjectURL(fpDownloadUrl); fpDownloadUrl = null; }
+    const auto = extractFromName(file.name);
+    if (auto.year && !fpErpYear.value.trim()) fpErpYear.value = auto.year;
+    if (auto.date && !fpErpDate.value.trim()) fpErpDate.value = auto.date;
+    updateFpErpPreview();
+  }
+
+  function fpClearFile() {
+    fpSelectedFile = null;
+    fpFileInput.value = '';
+    fpFileSelected.classList.remove('show');
+    fpBtn.disabled = true;
+    fpResult.className = 'result';
+    if (fpDownloadUrl) { URL.revokeObjectURL(fpDownloadUrl); fpDownloadUrl = null; }
+  }
+
+  function onFpFileInputChange() {
+    if (fpFileInput.files && fpFileInput.files[0]) fpSetFile(fpFileInput.files[0]);
+  }
+  fpFileInput.addEventListener('change', onFpFileInputChange);
+  fpFileInput.addEventListener('input', onFpFileInputChange);
+
+  let fpLastFileName = '';
+  setInterval(() => {
+    if (fpFileInput.files && fpFileInput.files[0]) {
+      const f = fpFileInput.files[0];
+      if (f.name !== fpLastFileName) { fpLastFileName = f.name; fpSetFile(f); }
+    }
+  }, 300);
+
+  fpDropZone.addEventListener('click', () => fpFileInput.click());
+  fpFileRemove.addEventListener('click', e => { e.stopPropagation(); fpClearFile(); });
+  fpDropZone.addEventListener('dragover', e => { e.preventDefault(); fpDropZone.classList.add('drag-over'); });
+  fpDropZone.addEventListener('dragleave', () => fpDropZone.classList.remove('drag-over'));
+  fpDropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    fpDropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) fpSetFile(file);
+    else alert('请上传 .xlsx 格式的文件');
+  });
+
+  fpBtn.addEventListener('click', async () => {
+    if (!fpSelectedFile) return;
+    fpBtn.disabled = true;
+    fpProgressWrap.classList.add('show');
+    fpResult.className = 'result';
+    fpProgressBar.style.width = '20%';
+    fpProgressLabel.textContent = '正在上传文件…';
+
+    const formData = new FormData();
+    formData.append('file', fpSelectedFile, fpSelectedFile.name);
+    formData.append('erp_year', fpErpYear.value.trim());
+    formData.append('erp_date', fpErpDate.value.trim());
+    formData.append('start_num', fpErpStartNum.value.trim() ? padStart4(fpErpStartNum.value.trim()) : '1');
+
+    try {
+      fpProgressBar.style.width = '50%';
+      fpProgressLabel.textContent = '正在转换物料模板…';
+      const resp = await fetch('/full-process', { method: 'POST', body: formData });
+      fpProgressBar.style.width = '85%';
+      fpProgressLabel.textContent = '正在处理审查…';
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({ error: resp.statusText }));
+        throw new Error(errData.error || '服务器错误');
+      }
+      const statsB64 = resp.headers.get('X-Stats-B64');
+      const stats = statsB64 ? JSON.parse(atob(statsB64)) : {};
+      const blob = await resp.blob();
+      if (fpDownloadUrl) URL.revokeObjectURL(fpDownloadUrl);
+      fpDownloadUrl = URL.createObjectURL(blob);
+      const outName = '顺丰出库单' + new Date().toISOString().slice(0,10) + '.xlsx';
+      fpDownloadBtn.href = fpDownloadUrl;
+      fpDownloadBtn.download = outName;
+      fpProgressBar.style.width = '100%';
+      fpProgressLabel.textContent = '处理完成！';
+
+      // 统计卡片
+      const vlookupHit  = stats.vlookup_hit  || 0;
+      const vlookupMiss = stats.vlookup_miss || [];
+      const vlookupLoaded = stats.vlookup_loaded;
+      fpStatsGrid.innerHTML = `
+        <div class="stat-item"><div class="stat-label">物料行数→出库行数</div><div class="stat-value">${stats.convert_total || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">门店数</div><div class="stat-value">${stats.convert_stores || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">重复ID行数</div><div class="stat-value">${stats.dup_rows || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">ERP编号数</div><div class="stat-value">${stats.erp_count || 0}</div></div>
+        ${vlookupLoaded ? `<div class="stat-item"><div class="stat-label">门店信息命中</div><div class="stat-value" style="color:${vlookupHit>0?'#16a34a':'#dc2626'}">${vlookupHit}</div></div>` : ''}
+        ${vlookupLoaded && vlookupMiss.length > 0 ? `<div class="stat-item"><div class="stat-label">未命中门店</div><div class="stat-value" style="color:#d97706">${vlookupMiss.length}</div></div>` : ''}
+      `;
+      if (vlookupLoaded && vlookupMiss.length > 0) {
+        const missDiv = document.createElement('div');
+        missDiv.style.cssText = 'margin-top:10px;padding:10px 12px;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;font-size:12px;color:#92400e;';
+        missDiv.innerHTML = `⚠️ 以下 ${vlookupMiss.length} 个门店ID在门店信息表中未找到，收方信息未填充：<br><span style="font-family:monospace;">${vlookupMiss.join('、')}</span>`;
+        fpResult.appendChild(missDiv);
+      }
+
+      // 未映射商品列
+      const fpUnmappedWrap   = document.getElementById('fpUnmappedWrap');
+      const fpUnmappedHeader = document.getElementById('fpUnmappedHeader');
+      const fpUnmappedTitle  = document.getElementById('fpUnmappedTitle');
+      const fpUnmappedTbody  = document.getElementById('fpUnmappedTbody');
+      const unmapped = stats.convert_unmapped || [];
+      fpUnmappedWrap.classList.add('show');
+      fpUnmappedTbody.innerHTML = '';
+      if (unmapped.length === 0) {
+        fpUnmappedHeader.className = 'audit-header ok';
+        fpUnmappedTitle.textContent = '✅ 所有商品列均已映射到CSP';
+      } else {
+        fpUnmappedHeader.className = 'audit-header warn';
+        fpUnmappedTitle.textContent = `⚠️ ${unmapped.length} 个商品列无CSP映射，已跳过`;
+        unmapped.forEach((col, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${idx+1}</td><td>${col}</td><td class="warn-reason">CSP D列中找不到此列头，已跳过</td>`;
+          fpUnmappedTbody.appendChild(tr);
+        });
+        document.getElementById('fpUnmappedBody').classList.add('open');
+        document.getElementById('fpUnmappedToggle').textContent = '▲ 收起';
+      }
+
+      // 商品编码审查
+      const fpAuditWrap   = document.getElementById('fpAuditWrap');
+      const fpAuditHeader = document.getElementById('fpAuditHeader');
+      const fpAuditTitle  = document.getElementById('fpAuditTitle');
+      const fpAuditTbody  = document.getElementById('fpAuditTbody');
+      const errors  = stats.audit_errors  || [];
+      const missing = stats.audit_missing || [];
+      const allIssues = [...errors, ...missing].sort((a,b) => a.row - b.row);
+      fpAuditWrap.classList.add('show');
+      fpAuditTbody.innerHTML = '';
+      if (allIssues.length === 0) {
+        fpAuditHeader.className = 'audit-header ok';
+        fpAuditTitle.textContent = '✅ 商品编码审查通过，所有型号与编码一一对应';
+      } else {
+        const errCount  = errors.length;
+        const missCount = missing.length;
+        const parts = [];
+        if (errCount)  parts.push(`${errCount} 处对应错误`);
+        if (missCount) parts.push(`${missCount} 处找不到编码`);
+        fpAuditHeader.className = errCount > 0 ? 'audit-header err' : 'audit-header warn';
+        fpAuditTitle.textContent = `⚠️ 商品编码审查发现问题：${parts.join('，')}`;
+        allIssues.forEach(item => {
+          const isMissing = !item.j;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${item.row}</td><td>${item.ak||'-'}</td><td>${item.j||'-'}</td><td class="${isMissing?'warn-reason':'reason'}">${item.reason}</td>`;
+          fpAuditTbody.appendChild(tr);
+        });
+        document.getElementById('fpAuditBody').classList.add('open');
+        document.getElementById('fpAuditToggle').textContent = '▲ 收起';
+      }
+
+      // 收方公司一致性
+      const fpCompanyWrap   = document.getElementById('fpCompanyWrap');
+      const fpCompanyHeader = document.getElementById('fpCompanyHeader');
+      const fpCompanyTitle  = document.getElementById('fpCompanyTitle');
+      const fpCompanyTbody  = document.getElementById('fpCompanyTbody');
+      const fpCompanyBody   = document.getElementById('fpCompanyBody');
+      const conflicts = stats.company_conflicts || [];
+      fpCompanyWrap.classList.add('show');
+      fpCompanyTbody.innerHTML = '';
+      if (conflicts.length === 0) {
+        fpCompanyHeader.className = 'audit-header ok';
+        fpCompanyTitle.textContent = '✅ 收方公司一致性检查通过，手机号与地址均无冲突';
+      } else {
+        fpCompanyHeader.className = 'audit-header warn';
+        fpCompanyTitle.textContent = `⚠️ 发现 ${conflicts.length} 个收方公司存在手机/地址不一致`;
+        conflicts.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.company}</td><td style="font-size:11px;color:#888;">第 ${item.rows.join('、')} 行</td><td class="warn-reason">${item.detail}</td>`;
+          fpCompanyTbody.appendChild(tr);
+        });
+        fpCompanyBody.classList.add('open');
+        document.getElementById('fpCompanyToggle').textContent = '▲ 收起';
+      }
+
+      // 特殊字符
+      const fpSpecialWrap   = document.getElementById('fpSpecialWrap');
+      const fpSpecialHeader = document.getElementById('fpSpecialHeader');
+      const fpSpecialTitle  = document.getElementById('fpSpecialTitle');
+      const fpSpecialTbody  = document.getElementById('fpSpecialTbody');
+      const fpSpecialBody   = document.getElementById('fpSpecialBody');
+      const specials = stats.special_chars || [];
+      fpSpecialWrap.classList.add('show');
+      fpSpecialTbody.innerHTML = '';
+      if (specials.length === 0) {
+        fpSpecialHeader.className = 'audit-header ok';
+        fpSpecialTitle.textContent = '✅ 未发现特殊字符';
+      } else {
+        fpSpecialHeader.className = 'audit-header warn';
+        fpSpecialTitle.textContent = `⚠️ 发现 ${specials.length} 处特殊字符，请检查`;
+        specials.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${item.row}</td><td>${item.col}</td><td style="font-family:monospace;">${item.char_code}</td><td class="warn-reason" style="word-break:break-all;">${(item.original||item.value||'').replace(/</g,'&lt;')}</td><td style="word-break:break-all;color:#16a34a;">${(item.cleaned||'').replace(/</g,'&lt;')}</td>`;
+          fpSpecialTbody.appendChild(tr);
+        });
+        fpSpecialBody.classList.add('open');
+        document.getElementById('fpSpecialToggle').textContent = '▲ 收起';
+      }
+
+      fpResult.className = 'result success';
+      fpResultTitle.textContent = '✅ 一键处理成功！点击下方按钮下载文件';
+      fpErrorMsg.textContent = '';
+      setTimeout(() => { fpProgressWrap.classList.remove('show'); fpProgressBar.style.width = '0%'; }, 800);
+    } catch (err) {
+      fpProgressBar.style.width = '100%';
+      fpResult.className = 'result error';
+      fpResultTitle.textContent = '❌ 处理失败';
+      fpStatsGrid.innerHTML = '';
+      fpErrorMsg.textContent = err.message;
+      fpProgressWrap.classList.remove('show');
+      fpProgressBar.style.width = '0%';
+    } finally {
+      fpBtn.disabled = false;
+    }
+  });
+
+  // ════════════════════════════════════════
+  //  Tab 2：物料模板转出库单
+  // ════════════════════════════════════════
+  cvBtn.addEventListener('click', async () => {
+    if (!cvSelectedFile) return;
+    cvBtn.disabled = true;
+    cvProgressWrap.classList.add('show');
+    cvResult.className = 'result';
+    cvProgressBar.style.width = '30%';
+    cvProgressLabel.textContent = '正在上传文件…';
+
+    const formData = new FormData();
+    formData.append('file', cvSelectedFile, cvSelectedFile.name);
+
+    try {
+      cvProgressBar.style.width = '60%';
+      cvProgressLabel.textContent = '正在转换数据…';
+      const resp = await fetch('/convert', { method: 'POST', body: formData });
+      cvProgressBar.style.width = '90%';
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({ error: resp.statusText }));
+        throw new Error(errData.error || '服务器错误');
+      }
+      const statsB64 = resp.headers.get('X-Stats-B64');
+      const stats = statsB64 ? JSON.parse(atob(statsB64)) : {};
+      const blob = await resp.blob();
+      if (cvDownloadUrl) URL.revokeObjectURL(cvDownloadUrl);
+      cvDownloadUrl = URL.createObjectURL(blob);
+      const outName = '顺丰出库单' + new Date().toISOString().slice(0,10) + '.xlsx';
+      cvDownloadBtn.href = cvDownloadUrl;
+      cvDownloadBtn.download = outName;
+      cvProgressBar.style.width = '100%';
+      cvProgressLabel.textContent = '转换完成！';
+
+      cvStatsGrid.innerHTML = `
+        <div class="stat-item"><div class="stat-label">生成出库行数</div><div class="stat-value">${stats.total || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">门店数</div><div class="stat-value">${stats.stores || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">已映射商品种类</div><div class="stat-value">${stats.products || 0}</div></div>
+        <div class="stat-item"><div class="stat-label">未映射列数</div><div class="stat-value">${stats.unmapped_count || 0}</div></div>
+      `;
+
+      // 未映射商品列提示
+      const cvUnmappedWrap  = document.getElementById('cvUnmappedWrap');
+      const cvUnmappedHeader = document.getElementById('cvUnmappedHeader');
+      const cvUnmappedTitle  = document.getElementById('cvUnmappedTitle');
+      const cvUnmappedTbody  = document.getElementById('cvUnmappedTbody');
+      const unmapped = stats.unmapped || [];
+      cvUnmappedWrap.classList.add('show');
+      cvUnmappedTbody.innerHTML = '';
+      if (unmapped.length === 0) {
+        cvUnmappedHeader.className = 'audit-header ok';
+        cvUnmappedTitle.textContent = '✅ 所有商品列均已映射到CSP';
+      } else {
+        cvUnmappedHeader.className = 'audit-header warn';
+        cvUnmappedTitle.textContent = `⚠️ ${unmapped.length} 个商品列无CSP映射，已跳过`;
+        unmapped.forEach((col, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td class="row-num">${idx+1}</td><td>${col}</td><td class="warn-reason">CSP D列中找不到此列头，已跳过</td>`;
+          cvUnmappedTbody.appendChild(tr);
+        });
+        document.getElementById('cvUnmappedBody').classList.add('open');
+        document.getElementById('cvUnmappedToggle').textContent = '▲ 收起';
+      }
+
+      cvResult.className = 'result success';
+      cvResultTitle.textContent = '✅ 转换成功！点击下方按钮下载文件';
+      cvErrorMsg.textContent = '';
+      setTimeout(() => { cvProgressWrap.classList.remove('show'); cvProgressBar.style.width = '0%'; }, 800);
+    } catch (err) {
+      cvProgressBar.style.width = '100%';
+      cvResult.className = 'result error';
+      cvResultTitle.textContent = '❌ 转换失败';
+      cvStatsGrid.innerHTML = '';
+      cvErrorMsg.textContent = err.message;
+      cvProgressWrap.classList.remove('show');
+      cvProgressBar.style.width = '0%';
+    } finally {
+      cvBtn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>

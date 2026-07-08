@@ -1,0 +1,50 @@
+Row 2: shop=721514336, ERP=Keeta-2026-0625-0127, line=1, code=Keeta011, model=纸袋【Preminum黑】
+Row 3: shop=721514336, ERP=Keeta-2026-0625-0127, line=2, code=Keeta017, model=杯托【2托】
+Row 4: shop=721524339, ERP=Keeta-2026-0625-0128, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 5: shop=721524339, ERP=Keeta-2026-0625-0128, line=2, code=Keeta011, model=纸袋【Preminum黑】
+Row 6: shop=721524339, ERP=Keeta-2026-0625-0128, line=3, code=Keeta017, model=杯托【2托】
+Row 7: shop=721430348, ERP=Keeta-2026-0625-0129, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 8: shop=691592, ERP=Keeta-2026-0625-0130, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 9: shop=602886, ERP=Keeta-2026-0625-0131, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 10: shop=721426361, ERP=Keeta-2026-0625-0132, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 11: shop=721426361, ERP=Keeta-2026-0625-0132, line=2, code=Keeta011, model=纸袋【Preminum黑】
+Row 12: shop=721523340, ERP=Keeta-2026-0625-0133, line=1, code=Keeta018, model=杯托【4托】
+Row 13: shop=721520338, ERP=Keeta-2026-0625-0134, line=1, code=Keeta017, model=杯托【2托】
+Row 14: shop=721520338, ERP=Keeta-2026-0625-0134, line=2, code=Keeta018, model=杯托【4托】
+Row 15: shop=721520338, ERP=Keeta-2026-0625-0134, line=3, code=Keeta011, model=纸袋【Preminum黑】
+Row 16: shop=721516338, ERP=Keeta-2026-0625-0135, line=1, code=Keeta018, model=杯托【4托】
+Row 17: shop=721516338, ERP=Keeta-2026-0625-0135, line=2, code=Keeta017, model=杯托【2托】
+Row 18: shop=721512336, ERP=Keeta-2026-0625-0136, line=1, code=Keeta017, model=杯托【2托】
+Row 19: shop=721512336, ERP=Keeta-2026-0625-0136, line=2, code=Keeta007, model=无纺布【Preminum黑】
+Row 20: shop=721512336, ERP=Keeta-2026-0625-0136, line=3, code=Keeta011, model=纸袋【Preminum黑】
+Row 21: shop=721520339, ERP=Keeta-2026-0625-0137, line=1, code=Keeta018, model=杯托【4托】
+Row 22: shop=471339, ERP=Keeta-2026-0625-0138, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 23: shop=561061, ERP=Keeta-2026-0625-0139, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 24: shop=484097, ERP=Keeta-2026-0625-0140, line=1, code=Keeta011, model=纸袋【Preminum黑】
+Row 25: shop=721447356, ERP=Keeta-2026-0625-0141, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 26: shop=478491, ERP=Keeta-2026-0625-0142, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 27: shop=487349, ERP=Keeta-2026-0625-0143, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 28: shop=458713, ERP=Keeta-2026-0625-0144, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 29: shop=721444332, ERP=Keeta-2026-0625-0145, line=1, code=Keeta005, model=无纺布【规格三中号】
+Row 30: shop=721444332, ERP=Keeta-2026-0625-0145, line=2, code=Keeta006, model=无纺布【规格四大号】
+Row 31: shop=568035, ERP=Keeta-2026-0625-0146, line=1, code=Keeta008, model=纸袋【通版】
+Row 32: shop=568035, ERP=Keeta-2026-0625-0146, line=2, code=Keeta011, model=纸袋【Preminum黑】
+Row 33: shop=566650, ERP=Keeta-2026-0625-0147, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 34: shop=481355, ERP=Keeta-2026-0625-0148, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 35: shop=478013, ERP=Keeta-2026-0625-0149, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 36: shop=448660, ERP=Keeta-2026-0625-0150, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 37: shop=471671, ERP=Keeta-2026-0625-0151, line=1, code=Keeta011, model=纸袋【Preminum黑】
+Row 38: shop=578199, ERP=Keeta-2026-0625-0152, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 39: shop=721497295, ERP=Keeta-2026-0625-0153, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 40: shop=744191, ERP=Keeta-2026-0625-0154, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 41: shop=721449312, ERP=Keeta-2026-0625-0155, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 42: shop=607018, ERP=Keeta-2026-0625-0156, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 43: shop=451934, ERP=Keeta-2026-0625-0157, line=1, code=Keeta006, model=无纺布【规格四大号】
+Row 44: shop=478407, ERP=Keeta-2026-0625-0158, line=1, code=Keeta007, model=无纺布【Preminum黑】
+Row 45: shop=486101, ERP=Keeta-2026-0625-0159, line=1, code=Keeta011, model=纸袋【Preminum黑】
+Row 46: shop=486101, ERP=Keeta-2026-0625-0159, line=2, code=Keeta007, model=无纺布【Preminum黑】
+Row 47: shop=721516329, ERP=Keeta-2026-0625-0160, line=1, code=Keeta011, model=纸袋【Preminum黑】
+Row 48: shop=461670, ERP=Keeta-2026-0625-0161, line=1, code=Keeta007, model=无纺布【Preminum黑】
+
+Unique ERP count: 35
+Unique shop count: 35

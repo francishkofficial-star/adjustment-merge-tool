@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); items[33].querySelector('a.copy').click(); 'copied q34';

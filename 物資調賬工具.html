@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物資調賬工具</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1a1a2e;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+        .drop-zone {
+            border: 2px dashed #c0c4cc;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            background: #fff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 24px;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #409eff;
+            background: #f0f9ff;
+        }
+        .drop-zone .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .drop-zone .title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .drop-zone .hint {
+            font-size: 13px;
+            color: #909399;
+        }
+        .file-info {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: none;
+        }
+        .file-info.show { display: block; }
+        .file-info .file-name {
+            font-weight: 500;
+            color: #409eff;
+            margin-bottom: 4px;
+        }
+        .file-info .file-meta {
+            font-size: 13px;
+            color: #909399;
+        }
+        .mapping-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: none;
+        }
+        .mapping-section.show { display: block; }
+        .mapping-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a2e;
+        }
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .mapping-table th {
+            background: #f5f7fa;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 500;
+            color: #606266;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .mapping-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .mapping-table tr:hover td {
+            background: #f5f7fa;
+        }
+        .arrow {
+            color: #909399;
+            font-size: 12px;
+        }
+        .source-col {
+            color: #409eff;
+            font-weight: 500;
+        }
+        .target-col {
+            color: #67c23a;
+            font-weight: 500;
+        }
+        .note {
+            color: #e6a23c;
+            font-size: 12px;
+        }
+        .btn-group {
+            display: none;
+            text-align: center;
+            gap: 12px;
+            justify-content: center;
+        }
+        .btn-group.show {
+            display: flex;
+        }
+        .btn {
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #409eff;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #66b1ff;
+        }
+        .btn-primary:disabled {
+            background: #a0cfff;
+            cursor: not-allowed;
+        }
+        .btn-secondary {
+            background: #f5f7fa;
+            color: #606266;
+            border: 1px solid #dcdfe6;
+        }
+        .btn-secondary:hover {
+            background: #e4e7ed;
+        }
+        .status {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #67c23a;
+            min-height: 20px;
+        }
+        .status.error {
+            color: #f56c6c;
+        }
+        .preview-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            display: none;
+        }
+        .preview-section.show { display: block; }
+        .preview-section h2 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #1a1a2e;
+        }
+        .preview-table-wrapper {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .preview-table th {
+            background: #f5f7fa;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 500;
+            color: #606266;
+            border-bottom: 1px solid #ebeef5;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        .preview-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #ebeef5;
+            white-space: nowrap;
+        }
+        .preview-table tr:hover td {
+            background: #f5f7fa;
+        }
+        .cell-empty {
+            color: #c0c4cc;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>物資調賬工具</h1>
+        <p class="subtitle">拖拽物料底表 Excel 文件，自動生成調賬模板</p>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="icon">&#128229;</div>
+            <div class="title">拖拽文件到這裡，或點擊選擇文件</div>
+            <div class="hint">支持 .xlsx / .xls 格式</div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+        </div>
+
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName"></div>
+            <div class="file-meta" id="fileMeta"></div>
+        </div>
+
+        <div class="mapping-section" id="mappingSection">
+            <h2>列映射關係</h2>
+            <table class="mapping-table">
+                <thead>
+                    <tr>
+                        <th>調賬模板列</th>
+                        <th></th>
+                        <th>物料底表來源列</th>
+                        <th>說明</th>
+                    </tr>
+                </thead>
+                <tbody id="mappingBody"></tbody>
+            </table>
+            <div id="priceConfigSection" style="margin-top:20px;">
+                <h2 style="font-size:16px;margin-bottom:12px;color:#1a1a2e;">調賬金額計算規則（單價 × 數量）</h2>
+                <table class="mapping-table" id="priceConfigTable">
+                    <thead>
+                        <tr>
+                            <th>物料名稱</th>
+                            <th>Excel列</th>
+                            <th>單價（HKD）</th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceConfigBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <h2>數據預覽（前 10 行）</h2>
+            <div class="preview-table-wrapper">
+                <table class="preview-table" id="previewTable"></table>
+            </div>
+        </div>
+
+        <div class="btn-group" id="btnGroup">
+            <button class="btn btn-primary" id="btnGenerate" disabled>開始生成</button>
+            <button class="btn btn-secondary" id="btnReset">重新上傳</button>
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileMeta = document.getElementById('fileMeta');
+        const mappingSection = document.getElementById('mappingSection');
+        const mappingBody = document.getElementById('mappingBody');
+        const previewSection = document.getElementById('previewSection');
+        const previewTable = document.getElementById('previewTable');
+        const btnGroup = document.getElementById('btnGroup');
+        const btnGenerate = document.getElementById('btnGenerate');
+        const btnReset = document.getElementById('btnReset');
+        const status = document.getElementById('status');
+
+        let rawData = null;
+        let workbook = null;
+
+        const COLUMN_MAPPING = [
+            { target: '商戶提交時間', source: '下單日期', note: '' },
+            { target: 'id', source: '門店ID', note: '' },
+            { target: 'name', source: '門店名稱', note: '' },
+            { target: '單杯裝環保紙袋', source: '單杯裝紙袋', note: '' },
+            { target: '雙杯裝環保紙袋', source: '雙杯裝紙袋', note: '' },
+            { target: '紙袋', source: '紙袋', note: '' },
+            { target: '单杯無紡布袋（保溫）', source: '單杯無紡布袋', note: '' },
+            { target: '双杯無紡布袋（保溫）', source: '雙杯無紡布袋', note: '' },
+            { target: '中号無紡布袋（保温）', source: '3號無紡布袋', note: '' },
+            { target: '标准無紡布袋（保温）', source: '4號無紡布袋', note: '' },
+            { target: '紙漿杯托（飲品）', source: '紙漿杯2托', note: '' },
+            { target: '膠袋', source: '大膠袋', note: '' },
+            { target: '小膠袋', source: '小膠袋', note: '' },
+            { target: '調賬金額', source: '—', note: '自動公式計算' },
+        ];
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/i)) {
+                showStatus('請上傳 .xlsx 或 .xls 格式的 Excel 文件', true);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    rawData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+
+                    if (rawData.length < 2) {
+                        showStatus('文件數據為空或格式不正確', true);
+                        return;
+                    }
+
+                    fileName.textContent = file.name;
+                    fileMeta.textContent = `工作表: ${workbook.SheetNames[0]} | 共 ${rawData.length - 1} 行數據 | ${(file.size / 1024).toFixed(1)} KB`;
+                    fileInfo.classList.add('show');
+
+                    renderMapping();
+                    renderPreview();
+                    mappingSection.classList.add('show');
+                    previewSection.classList.add('show');
+                    btnGroup.classList.add('show');
+                    btnGenerate.disabled = false;
+                    showStatus('文件讀取成功，請點擊「開始生成」');
+                } catch (err) {
+                    showStatus('文件解析失敗: ' + err.message, true);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderMapping() {
+            mappingBody.innerHTML = '';
+            const headers = rawData[0];
+            const headerSet = new Set(headers.map(h => String(h).trim()));
+
+            COLUMN_MAPPING.forEach(map => {
+                const tr = document.createElement('tr');
+                const sources = map.source.split(' + ');
+                const allFound = sources.every(s => s === '—' || headerSet.has(s));
+
+                tr.innerHTML = `
+                    <td class="target-col">${map.target}</td>
+                    <td class="arrow">→</td>
+                    <td class="source-col">${map.source}</td>
+                    <td><span class="note">${map.note}</span> ${!allFound && map.source !== '—' ? '<span style="color:#f56c6c;font-size:12px;">（未找到）</span>' : ''}</td>
+                `;
+                mappingBody.appendChild(tr);
+            });
+
+            // 渲染單價配置表
+            const priceConfigBody = document.getElementById('priceConfigBody');
+            priceConfigBody.innerHTML = '';
+            PRICE_CONFIG.forEach(cfg => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${cfg.name}</td>
+                    <td style="text-align:center;font-family:monospace;color:#409eff;">${cfg.col}</td>
+                    <td style="text-align:right;font-weight:500;">${cfg.price}</td>
+                `;
+                priceConfigBody.appendChild(tr);
+            });
+        }
+
+        function renderPreview() {
+            const headers = rawData[0];
+            const rows = rawData.slice(1, 11);
+            const sourceToIndex = {};
+            headers.forEach((h, i) => sourceToIndex[String(h).trim()] = i);
+
+            const targetHeaders = COLUMN_MAPPING.map(m => m.target);
+            const targetSources = COLUMN_MAPPING.map(m => m.source);
+
+            let html = '<thead><tr>' + targetHeaders.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+            html += '<tbody>';
+
+            rows.forEach((row, rowIdx) => {
+                html += '<tr>';
+                targetSources.forEach((src, idx) => {
+                    let val = '';
+                    if (src === '—') {
+                        // 預覽時顯示公式提示
+                        const excelRow = rowIdx + 2;
+                        val = `[公式] ${buildFormula(excelRow)}`;
+                    } else if (src.includes('+')) {
+                        const parts = src.split(' + ');
+                        let sum = 0;
+                        let hasVal = false;
+                        parts.forEach(p => {
+                            const colIdx = sourceToIndex[p];
+                            if (colIdx !== undefined) {
+                                const v = parseFloat(row[colIdx]);
+                                if (!isNaN(v)) { sum += v; hasVal = true; }
+                            }
+                        });
+                        val = hasVal ? sum : '';
+                    } else {
+                        const colIdx = sourceToIndex[src];
+                        if (colIdx !== undefined) {
+                            val = row[colIdx];
+                        }
+                    }
+                    let display;
+                    if (val === '' || val === null || val === undefined) {
+                        display = '<span class="cell-empty">—</span>';
+                    } else if (typeof val === 'string' && val.startsWith('[公式]')) {
+                        display = `<span style="color:#409eff;font-size:12px;">${escapeHtml(val)}</span>`;
+                    } else {
+                        display = escapeHtml(String(val));
+                    }
+                    html += `<td>${display}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody>';
+            previewTable.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        btnGenerate.addEventListener('click', () => {
+            if (!rawData) return;
+            generateAndDownload();
+        });
+
+        btnReset.addEventListener('click', () => {
+            rawData = null;
+            workbook = null;
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            mappingSection.classList.remove('show');
+            previewSection.classList.remove('show');
+            btnGroup.classList.remove('show');
+            btnGenerate.disabled = true;
+            status.textContent = '';
+        });
+
+        // 調賬金額公式係數配置（單價 × 數量）
+        const PRICE_CONFIG = [
+            { col: 'D', price: 320, name: '單杯裝環保紙袋' },
+            { col: 'E', price: 360, name: '雙杯裝環保紙袋' },
+            { col: 'F', price: 200, name: '紙袋' },
+            { col: 'G', price: 150, name: '单杯無紡布袋（保溫）' },
+            { col: 'H', price: 180, name: '双杯無紡布袋（保溫）' },
+            { col: 'I', price: 230, name: '中号無紡布袋（保温）' },
+            { col: 'J', price: 280, name: '标准無紡布袋（保温）' },
+            { col: 'K', price: 200, name: '紙漿杯托（飲品）' },
+            { col: 'L', price: 29,  name: '膠袋' },
+            { col: 'M', price: 22,  name: '小膠袋' },
+        ];
+
+        function buildFormula(excelRow) {
+            const parts = PRICE_CONFIG.map(cfg => `${cfg.price}*${cfg.col}${excelRow}`);
+            return '=' + parts.join('+');
+        }
+
+        function generateAndDownload() {
+            const headers = rawData[0];
+            const rows = rawData.slice(1);
+            const sourceToIndex = {};
+            headers.forEach((h, i) => sourceToIndex[String(h).trim()] = i);
+
+            const targetHeaders = COLUMN_MAPPING.map(m => m.target);
+            const targetSources = COLUMN_MAPPING.map(m => m.source);
+
+            const outRows = [];
+            outRows.push(targetHeaders);
+
+            rows.forEach((row, rowIdx) => {
+                const outRow = [];
+                targetSources.forEach((src, colIdx) => {
+                    let val = '';
+                    if (src === '—') {
+                        // 調賬金額列：使用公式（佔位，後面單獨設置單元格公式屬性）
+                        val = '';
+                    } else if (src.includes('+')) {
+                        const parts = src.split(' + ');
+                        let sum = 0;
+                        let hasVal = false;
+                        parts.forEach(p => {
+                            const colIdx2 = sourceToIndex[p];
+                            if (colIdx2 !== undefined) {
+                                const v = parseFloat(row[colIdx2]);
+                                if (!isNaN(v)) { sum += v; hasVal = true; }
+                            }
+                        });
+                        val = hasVal ? sum : '';
+                    } else {
+                        const colIdx2 = sourceToIndex[src];
+                        if (colIdx2 !== undefined) {
+                            val = row[colIdx2];
+                        }
+                    }
+                    outRow.push(val);
+                });
+                outRows.push(outRow);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(outRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '調賬模板');
+
+            // 單獨設置調賬金額列的公式屬性，確保 Excel 能正確識別和計算
+            const formulaColIndex = targetHeaders.indexOf('調賬金額'); // 0-based
+            if (formulaColIndex >= 0) {
+                const colLetter = XLSX.utils.encode_col(formulaColIndex);
+                rows.forEach((_, rowIdx) => {
+                    const excelRow = rowIdx + 2; // Excel 行號從 1 開始，第 1 行是表頭
+                    const cellRef = colLetter + excelRow;
+                    const formula = buildFormula(excelRow);
+                    ws[cellRef] = { t: 'n', f: formula, v: 0 };
+                });
+                // 確保該列在範圍內
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                if (range.e.c < formulaColIndex) range.e.c = formulaColIndex;
+                ws['!ref'] = XLSX.utils.encode_range(range);
+            }
+
+            const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const filename = `物資調賬模版表_${dateStr}.xlsx`;
+            XLSX.writeFile(wb, filename);
+
+            showStatus(`調賬模板已生成並下載: ${filename}`);
+        }
+
+        function showStatus(msg, isError = false) {
+            status.textContent = msg;
+            status.className = 'status' + (isError ? ' error' : '');
+        }
+    </script>
+</body>
+</html>

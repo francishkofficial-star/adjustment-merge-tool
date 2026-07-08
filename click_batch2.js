@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var allLinks = q.querySelectorAll('a'); var batchLink = null; allLinks.forEach(function(el){ if(el.textContent.trim() === '批量添加选项'){ batchLink = el; } }); if(batchLink){ batchLink.click(); '批量添加选项 clicked'; } else { 'not found'; }

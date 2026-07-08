@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var titleEl = q.querySelector('[contenteditable=true]'); titleEl.focus(); document.execCommand('selectAll', false, null); document.execCommand('insertText', false, 'Beverage Sealing Film | HK$0 | Min. Order 3 Unit 10 rolls / Unit Free Shipping'); titleEl.textContent;

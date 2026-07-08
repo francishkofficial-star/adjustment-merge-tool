@@ -225,15 +225,13 @@ h3.section-title{font-size:15px;color:#1e293b;margin-bottom:14px;font-weight:600
 
 <script>
 // ========== 問卷 CSP 對應關係映射 ==========
-// 來源: CSP商品管理模板.xlsx
-// Col 5(問卷結果-商品名稱) → templateName, Col 9(問卷結果-商品名稱-英文) → enPattern
 var CSP_MAPPINGS = [
   { templateName: '大膠袋',       cnPattern: '11.膠袋',    enPattern: '22.Plastic Bag' },
   { templateName: '小膠袋',       cnPattern: '12.小膠袋',   enPattern: '23.Small Plastic Bag' },
-  { templateName: '單杯無紡布袋', cnPattern: '6.無紡布袋（保溫）', enPattern: '17.Non-woven bag(single serve cup' },
-  { templateName: '雙杯無紡布袋', cnPattern: '7.無紡布袋（保溫）', enPattern: '18.Non-woven bag(double serve cup' },
-  { templateName: '3號無紡布袋',  cnPattern: '8.無紡布袋（保溫）', enPattern: '19.Non-woven bag( medium size' },
-  { templateName: '4號無紡布袋',  cnPattern: '9.無紡布袋（保溫）', enPattern: '20.Non-woven bag( Standard size' },
+  { templateName: '單杯無紡布袋', cnPattern: '6.無紡布袋（保溫） | HK$150', enPattern: '17.Non-woven bag(single serve cup' },
+  { templateName: '雙杯無紡布袋', cnPattern: '7.無紡布袋（保溫）| HK$180', enPattern: '18.Non-woven bag(double serve cup' },
+  { templateName: '3號無紡布袋',  cnPattern: '8.無紡布袋（保溫） | HK$230', enPattern: '19.Non-woven bag( medium size' },
+  { templateName: '4號無紡布袋',  cnPattern: '9.無紡布袋（保溫）| HK$280', enPattern: '20.Non-woven bag( Standard size' },
   { templateName: '紙袋',         cnPattern: '5.紙袋',      enPattern: '16.Paper Bag' },
   { templateName: '打印紙',       cnPattern: '14.打印紙',   enPattern: '25.Print Roll' },
   { templateName: '紙漿杯2托',    cnPattern: '10.紙漿杯托', enPattern: '21.Cup Holder' },
@@ -241,8 +239,7 @@ var CSP_MAPPINGS = [
 ];
 
 // ========== 商家服務市場訂單 CSP 對應（規格 G列 → 物料模板列名） ==========
-// 來源: CSP商品管理模板.xlsx
-// Col 8(商家服務訂單-商品名稱) → specName, Col 4(物料-訂單模板-商品名稱) → templateName
+// 根據 CSP商品管理模板.xlsx: Column H(商家服務訂單商品名稱) → Column D(物料-訂單模板-商品名稱)
 var SERVICE_CSP_MAPPINGS = [
   { specName: '大膠袋',         templateName: '大膠袋' },
   { specName: '小膠袋',         templateName: '小膠袋' },
@@ -253,7 +250,7 @@ var SERVICE_CSP_MAPPINGS = [
   { specName: '通版紙袋',       templateName: '紙袋' },
   { specName: '熱敏紙',         templateName: '打印紙' },
   { specName: '紙漿杯托-2杯裝', templateName: '紙漿杯2托' },
-  { specName: '食品級飲品封口紙', templateName: '飲品封口紙' },
+  { specName: '紙漿杯托-4杯裝', templateName: '紙漿杯托-4托' },
   { specName: '食物安全封簽',   templateName: '封簽' },
 ];
 

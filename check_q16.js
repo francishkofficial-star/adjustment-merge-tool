@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[15]; var opts = q.querySelectorAll('[contenteditable=true]'); var result = []; opts.forEach(function(el, i){ result.push({i:i, val:el.textContent}); }); JSON.stringify(result);

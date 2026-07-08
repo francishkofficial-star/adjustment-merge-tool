@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[15]; var result = {title: q.querySelector('.question-title, .title, h3, [class*="title"]') ? q.querySelector('.question-title, .title, h3, [class*="title"]').textContent.substring(0,80) : 'no title el', html: q.innerHTML.substring(0,500)}; JSON.stringify(result);

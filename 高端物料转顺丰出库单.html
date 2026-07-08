@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高端物料轉順豐出庫單</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; padding: 20px; }
+.container { max-width: 1200px; margin: 0 auto; }
+h1 { text-align: center; color: #1a1a2e; margin-bottom: 8px; font-size: 24px; }
+.subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 24px; }
+.card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.card-title { font-size: 16px; font-weight: 600; color: #1a1a2e; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-title .icon { width: 24px; height: 24px; background: #e3f2fd; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.drop-zone { border: 2px dashed #c0c0c0; border-radius: 10px; padding: 40px 20px; text-align: center; transition: all 0.3s; cursor: pointer; background: #fafbfc; }
+.drop-zone:hover, .drop-zone.dragover { border-color: #2196f3; background: #e3f2fd; }
+.drop-zone .file-name { color: #2196f3; font-weight: 500; margin-top: 8px; word-break: break-all; }
+.drop-zone .hint { color: #999; font-size: 13px; margin-top: 4px; }
+.drop-zone input { display: none; }
+.row { display: flex; gap: 20px; flex-wrap: wrap; }
+.col { flex: 1; min-width: 280px; }
+.settings { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+.settings label { font-size: 14px; color: #555; }
+.settings input[type="number"] { width: 100px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+.settings input[type="date"] { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+.settings input[type="text"] { width: 120px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+.btn { background: #2196f3; color: #fff; border: none; padding: 12px 32px; border-radius: 8px; font-size: 15px; cursor: pointer; transition: background 0.2s; font-weight: 500; }
+.btn:hover { background: #1976d2; }
+.btn:disabled { background: #bbb; cursor: not-allowed; }
+.btn-group { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+.result-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+.result-table th { background: #f0f4f8; padding: 10px 8px; text-align: left; font-weight: 600; color: #444; border-bottom: 2px solid #e0e6ed; white-space: nowrap; }
+.result-table td { padding: 8px; border-bottom: 1px solid #e8ecf1; color: #333; }
+.result-table tr:hover { background: #f8fafc; }
+.log { background: #f8f9fa; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.8; max-height: 300px; overflow-y: auto; }
+.log-item { display: flex; gap: 8px; }
+.log-time { color: #999; min-width: 60px; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>高端物料轉順豐出庫單</h1>
+  <p class="subtitle">拖拽上傳文件，自動生成順豐出庫單（CSP映射已內置）</p>
+
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <div class="card-title"><div class="icon">1</div>高端物料文件</div>
+        <div class="drop-zone" id="dropHigh" onclick="document.getElementById('fileHigh').click()">
+          <div>拖拽文件到這裡，或點擊選擇</div>
+          <div class="hint">支持 .xlsx / .xls</div>
+          <div class="file-name" id="nameHigh"></div>
+          <input type="file" id="fileHigh" accept=".xlsx,.xls" onchange="handleFile(this, 'high')">
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <div class="card-title"><div class="icon">2</div>門店 Vlookup 文件</div>
+        <div class="drop-zone" id="dropVlookup" onclick="document.getElementById('fileVlookup').click()">
+          <div>拖拽文件到這裡，或點擊選擇</div>
+          <div class="hint">支持 .xlsx / .xls</div>
+          <div class="file-name" id="nameVlookup"></div>
+          <input type="file" id="fileVlookup" accept=".xlsx,.xls" onchange="handleFile(this, 'vlookup')">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">生成設置</div>
+    <div class="settings">
+      <label>ERP 起始編號：<input type="number" id="erpStart" value="127" min="1"></label>
+      <label>日期：<input type="date" id="erpDate"></label>
+      <label>貨主編碼：<input type="text" id="ownerCode" value="8526947236"></label>
+      <label>月結賬號：<input type="text" id="monthCode" value="8526947236"></label>
+      <label>倉庫代碼：<input type="text" id="warehouseCode" value="1006DCD"></label>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="btnGen" onclick="generate()" disabled>開始生成</button>
+      <button class="btn" id="btnExport" onclick="exportExcel()" disabled style="background:#4caf50;">導出 Excel</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <div class="card-title">生成結果</div>
+    <div class="log" id="log"></div>
+    <div style="margin-top:16px;overflow-x:auto;">
+      <table class="result-table" id="previewTable">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================== CSP 商品管理模板內置映射 ==================
+// 列對應：B=商品編碼, C=商品名稱, G=高端三合一, BN=單位(個/件/盒/箱)
+const CSP_MAPPING = {
+  // 高端三合一(G列) -> {code: B列, model: C列, unit: BN列}
+  '大胶袋': { code: 'Keeta001', model: '塑料袋【大】', unit: '扎' },
+  '細膠袋': { code: 'Keeta002', model: '塑料袋【小】', unit: '扎' },
+  '無紡布袋1號': { code: 'Keeta003', model: '无纺布【规格一单杯】', unit: '箱' },
+  '無紡布袋2號': { code: 'Keeta004', model: '无纺布【规格二双杯】', unit: '箱' },
+  '無紡布袋3號': { code: 'Keeta005', model: '无纺布【规格三中号】', unit: '箱' },
+  '無紡布袋4號': { code: 'Keeta006', model: '无纺布【规格四大号】', unit: '箱' },
+  '高端保溫袋': { code: 'Keeta007', model: '无纺布【Preminum黑】', unit: '箱' },
+  '普通紙袋': { code: 'Keeta008', model: '纸袋【通版】', unit: '箱' },
+  '高端纸袋': { code: 'Keeta011', model: '纸袋【Preminum黑】', unit: '箱' },
+  
+  // 物料-訂單模板-商品名稱(D列) -> 同樣映射
+  '大膠袋': { code: 'Keeta001', model: '塑料袋【大】', unit: '扎' },
+  '小膠袋': { code: 'Keeta002', model: '塑料袋【小】', unit: '扎' },
+  '單杯無紡布袋': { code: 'Keeta003', model: '无纺布【规格一单杯】', unit: '箱' },
+  '雙杯無紡布袋': { code: 'Keeta004', model: '无纺布【规格二双杯】', unit: '箱' },
+  '3號無紡布袋': { code: 'Keeta005', model: '无纺布【规格三中号】', unit: '箱' },
+  '4號無紡布袋': { code: 'Keeta006', model: '无纺布【规格四大号】', unit: '箱' },
+  '紙袋': { code: 'Keeta008', model: '纸袋【通版】', unit: '箱' },
+  '打印紙': { code: 'Keeta013', model: '机纸/小票纸', unit: '包' },
+  '飲品封口紙': { code: 'Keeta019', model: '硅油纸', unit: '包' },
+  '封簽': { code: 'Keeta020', model: '封签【通版】', unit: 'PCS' },
+  'pos機': { code: 'Keeta033', model: '翻新POS机【商米】', unit: '件' },
+  '充電頭': { code: 'Keeta035', model: '充电头【真唯】', unit: '件' },
+  '充電線': { code: 'Keeta036', model: '充电线【真唯】', unit: '件' },
+  
+  // 手動補充高端物料名稱
+  '普通紙袋（黄）': { code: 'Keeta008', model: '纸袋【通版】', unit: '箱' },
+  '高端纸袋（黑色普通）': { code: 'Keeta011', model: '纸袋【Preminum黑】', unit: '箱' },
+  '高端保溫袋': { code: 'Keeta007', model: '无纺布【Preminum黑】', unit: '箱' },
+  '無紡布袋3號': { code: 'Keeta005', model: '无纺布【规格三中号】', unit: '箱' },
+  '無紡布袋4號': { code: 'Keeta006', model: '无纺布【规格四大号】', unit: '箱' },
+  
+  // 杯托類：通用關鍵詞（兩格杯托/四格杯托/紙漿杯2托/紙漿杯托-4托 等只要含"杯托"均歸入此項）
+  '杯托': { code: 'Keeta017', model: '杯托【2托】', unit: '箱' },
+};
+
+// 模糊匹配關鍵詞列表（當精確匹配 CSP_MAPPING 失敗時，依次檢查物料名稱是否包含以下關鍵詞）
+const FUZZY_KEYWORDS = ['杯托'];
+
+function lookupMapping(material) {
+  if (CSP_MAPPING[material]) return CSP_MAPPING[material];
+  for (const kw of FUZZY_KEYWORDS) {
+    if (material.includes(kw)) return CSP_MAPPING[kw];
+  }
+  return null;
+}
+
+// 默認日期為今天
+document.getElementById('erpDate').value = new Date().toISOString().split('T')[0];
+
+let files = { high: null, vlookup: null };
+let dataHigh = null, dataVlookup = null;
+let outputData = [];
+let vlookupMap = {};
+
+function handleFile(input, type) {
+  const file = input.files[0];
+  if (!file) return;
+  files[type] = file;
+  document.getElementById('name' + type.charAt(0).toUpperCase() + type.slice(1)).textContent = file.name;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = new Uint8Array(e.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    
+    if (type === 'high') dataHigh = json;
+    if (type === 'vlookup') dataVlookup = json;
+    
+    checkReady();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function checkReady() {
+  const ready = files.high && files.vlookup;
+  document.getElementById('btnGen').disabled = !ready;
+}
+
+// 拖拽支持
+['dropHigh','dropVlookup'].forEach((id, idx) => {
+  const types = ['high','vlookup'];
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('dragover'); });
+  el.addEventListener('dragleave', () => el.classList.remove('dragover'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const input = document.getElementById('file' + types[idx].charAt(0).toUpperCase() + types[idx].slice(1));
+      const dt = new DataTransfer();
+      dt.items.add(files[0]);
+      input.files = dt.files;
+      handleFile(input, types[idx]);
+    }
+  });
+});
+
+function log(msg, type='info') {
+  const time = new Date().toLocaleTimeString('zh-HK', { hour12: false });
+  const color = type === 'error' ? '#c62828' : type === 'warn' ? '#ef6c00' : '#333';
+  document.getElementById('log').innerHTML += `<div class="log-item"><span class="log-time">${time}</span><span style="color:${color}">${msg}</span></div>`;
+}
+
+function buildVlookup() {
+  vlookupMap = {};
+  if (!dataVlookup) return;
+  for (let i = 1; i < dataVlookup.length; i++) {
+    const row = dataVlookup[i];
+    const shopId = (row[0] || '').toString().trim();
+    if (!shopId) continue;
+    vlookupMap[shopId] = {
+      contact: (row[1] || '').toString().trim(),
+      address: (row[2] || '').toString().trim(),
+      name: (row[3] || '').toString().trim()
+    };
+  }
+}
+
+function generate() {
+  if (!dataHigh || !dataVlookup) {
+    alert('請先上傳所有文件');
+    return;
+  }
+  
+  document.getElementById('resultCard').classList.remove('hidden');
+  document.getElementById('log').innerHTML = '';
+  outputData = [];
+  
+  buildVlookup();
+  
+  log('開始生成...');
+  log(`CSP 內置映射數: ${Object.keys(CSP_MAPPING).length}`);
+  log(`Vlookup 門店數: ${Object.keys(vlookupMap).length}`);
+  
+  const header = dataHigh[0];
+  const colShopId = header.indexOf('shopid');
+  const colShopName = header.indexOf('门店名称');
+  const colMaterial = header.indexOf('提報物料');
+  const colQty = header.indexOf('物料數量');
+  
+  if (colShopId < 0 || colMaterial < 0 || colQty < 0) {
+    log('高端文件列名不匹配，請確認包含 shopid、提報物料、物料數量', 'error');
+    return;
+  }
+  
+  const erpStart = parseInt(document.getElementById('erpStart').value) || 1;
+  const dateStr = document.getElementById('erpDate').value;
+  const dateFmt = dateStr.replace(/-/g, '');
+  const ownerCode = document.getElementById('ownerCode').value;
+  const monthCode = document.getElementById('monthCode').value;
+  const warehouseCode = document.getElementById('warehouseCode').value;
+  
+  const shopSeen = {};
+  let erpSeq = erpStart;
+  let unmapped = new Set();
+  let rowCount = 0;
+  
+  for (let i = 1; i < dataHigh.length; i++) {
+    const row = dataHigh[i];
+    const shopId = (row[colShopId] || '').toString().trim();
+    const material = (row[colMaterial] || '').toString().trim();
+    const qty = parseInt(row[colQty]) || 0;
+    
+    if (!shopId || !material || !qty) continue;
+    
+    const mapped = lookupMapping(material);
+    if (!mapped) {
+      unmapped.add(material);
+      continue;
+    }
+    
+    const vinfo = vlookupMap[shopId] || {};
+    const shopName = vinfo.name || (row[colShopName] || '').toString().trim() || '';
+    
+    if (!shopSeen[shopId]) {
+      shopSeen[shopId] = `Keeta-${dateFmt}-${erpSeq.toString().padStart(4, '0')}`;
+      erpSeq++;
+    }
+    
+    let lineNo = 1;
+    for (let j = 0; j < outputData.length; j++) {
+      if (outputData[j]['收方公司'] === shopId) lineNo++;
+    }
+    
+    outputData.push({
+      '仓库代码': warehouseCode,
+      '货主编码': ownerCode,
+      '顺丰订单类型': '销售订单',
+      '运费支付方式': '寄付',
+      '月结账号': monthCode,
+      'ERP行号': lineNo,
+      'ERP订单号': shopSeen[shopId],
+      '承运商': '顺丰速运',
+      '承运商产品': '顺丰特快',
+      '商品编码': mapped.code,
+      '发货数量': qty,
+      '商品单位': mapped.unit,
+      '收方国家': '中国',
+      '收件方省份': '香港特别行政区',
+      '收件方城市': '香港',
+      '收件方区/县': '',
+      '店铺名称': shopName,
+      '收方公司': shopId,
+      '收方姓名': shopName,
+      '收方电话': vinfo.contact || '',
+      '收方手机': '',
+      '收件地址': vinfo.address || '',
+      '收件方电子邮箱': '',
+      '收件方邮编': '',
+      '收件方证件类型': '',
+      '收件方证件号码': '',
+      '是否需要保价': '',
+      '保价金额': '',
+      '是否需要代收货款': '',
+      '代收货款金额': '',
+      '代收货款月结卡号': '',
+      '单价': '',
+      '订单总金额': '',
+      '币种简码': '',
+      '海关编号': '',
+      '商品品牌': '',
+      '商品型号': mapped.model,
+      '税金结算方式': '',
+      '税金结算账号': '',
+      '订单备注': '',
+      '是否签回单': '',
+      '是否自取件': '',
+      '库存属性': '',
+      '运单打印寄件方信息来源': ''
+    });
+    rowCount++;
+  }
+  
+  log(`成功轉換 ${rowCount} 行`);
+  if (unmapped.size > 0) log(`未映射物料: ${Array.from(unmapped).join(', ')}`, 'warn');
+  else log('所有物料均已映射');
+  log(`ERP 訂單數: ${Object.keys(shopSeen).length}`);
+  
+  renderPreview();
+  document.getElementById('btnExport').disabled = false;
+}
+
+function renderPreview() {
+  if (outputData.length === 0) return;
+  const cols = Object.keys(outputData[0]);
+  const thead = document.querySelector('#previewTable thead');
+  const tbody = document.querySelector('#previewTable tbody');
+  
+  let html = '<tr>';
+  cols.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr>';
+  thead.innerHTML = html;
+  
+  html = '';
+  const showRows = Math.min(outputData.length, 20);
+  for (let i = 0; i < showRows; i++) {
+    html += '<tr>';
+    cols.forEach(c => html += `<td>${outputData[i][c] !== undefined ? outputData[i][c] : ''}</td>`);
+    html += '</tr>';
+  }
+  if (outputData.length > 20) {
+    html += `<tr><td colspan="${cols.length}" style="text-align:center;color:#999;">... 共 ${outputData.length} 行，僅顯示前 20 行 ...</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function exportExcel() {
+  if (outputData.length === 0) return;
+  
+  const ws = XLSX.utils.json_to_sheet(outputData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '顺丰出库单');
+  
+  const dateStr = document.getElementById('erpDate').value;
+  const filename = `顺丰出库单${dateStr}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  
+  log(`已導出: ${filename}`);
+}
+</script>
+</body>
+</html>

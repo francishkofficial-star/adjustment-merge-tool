@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[33]; var allEls = q.querySelectorAll('*'); var result = []; allEls.forEach(function(el,i){ if(el.className && typeof el.className === 'string' && el.className.indexOf('delete') >= 0){ result.push({i:i, tag:el.tagName, cls:el.className.substring(0,60)}); } }); JSON.stringify(result.slice(0,10));

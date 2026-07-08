@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高端物料 → 順豐出庫單轉換器</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; padding: 20px; }
+.container { max-width: 1400px; margin: 0 auto; }
+h1 { text-align: center; font-size: 24px; margin-bottom: 8px; color: #1a1a2e; }
+.subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 24px; }
+
+.panel { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.panel-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a2e; border-left: 4px solid #4361ee; padding-left: 10px; }
+
+/* Upload area */
+.upload-area { border: 2px dashed #ccc; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.3s; background: #fafafa; }
+.upload-area:hover, .upload-area.dragover { border-color: #4361ee; background: #eef2ff; }
+.upload-area .icon { font-size: 40px; margin-bottom: 8px; }
+.upload-area .text { font-size: 14px; color: #666; }
+.upload-area .filename { font-size: 14px; color: #4361ee; font-weight: 600; margin-top: 8px; }
+
+/* Controls */
+.controls { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 200px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #555; }
+.form-group input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border 0.3s; }
+.form-group input:focus { outline: none; border-color: #4361ee; }
+
+/* Buttons */
+.btn { padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: #4361ee; color: #fff; }
+.btn-primary:hover { background: #3a56d4; }
+.btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+.btn-success { background: #2ecc71; color: #fff; }
+.btn-success:hover { background: #27ae60; }
+.btn-success:disabled { background: #aaa; cursor: not-allowed; }
+
+/* Mapping table */
+.mapping-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.mapping-table th { background: #f8f9fa; padding: 8px 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; }
+.mapping-table td { padding: 8px 12px; border-bottom: 1px solid #e9ecef; }
+.mapping-table tr:hover { background: #f8f9fa; }
+
+/* Result table */
+.result-wrapper { overflow-x: auto; max-height: 500px; border: 1px solid #e0e0e0; border-radius: 8px; }
+.result-table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.result-table th { background: #4361ee; color: #fff; padding: 8px 10px; text-align: left; position: sticky; top: 0; z-index: 10; font-weight: 600; }
+.result-table td { padding: 6px 10px; border-bottom: 1px solid #eee; }
+.result-table tr:nth-child(even) { background: #f9f9f9; }
+.result-table .erp-order { color: #4361ee; font-weight: 600; }
+
+/* Stats */
+.stats { display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap; }
+.stat-item { background: #f8f9fa; padding: 12px 20px; border-radius: 8px; text-align: center; min-width: 120px; }
+.stat-item .num { font-size: 24px; font-weight: 700; color: #4361ee; }
+.stat-item .label { font-size: 12px; color: #888; margin-top: 4px; }
+
+/* Warning */
+.warning { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 10px 16px; font-size: 13px; color: #856404; margin-bottom: 12px; display: none; }
+.warning.show { display: block; }
+
+/* Preview section */
+.preview-section { display: none; }
+.preview-section.show { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>高端物料 → 順豐出庫單轉換器</h1>
+  <p class="subtitle">上傳高端物料底表，自動轉換為順豐出庫單格式（44列）</p>
+
+  <!-- Step 1: Upload -->
+  <div class="panel">
+    <div class="panel-title">步驟一：上傳高端物料底表</div>
+    <div class="upload-area" id="uploadArea">
+      <div class="icon">📄</div>
+      <div class="text">點擊或拖拽上傳 Excel 檔案（.xlsx / .xls）</div>
+      <div class="filename" id="fileName"></div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+  </div>
+
+  <!-- Step 2: Settings -->
+  <div class="panel">
+    <div class="panel-title">步驟二：設定參數</div>
+    <div class="controls">
+      <div class="form-group">
+        <label>ERP訂單號起始編號</label>
+        <input type="text" id="erpStart" value="Keeta-6018-0115" placeholder="例如：Keeta-6018-0115">
+      </div>
+      <div class="form-group">
+        <label>倉庫代碼</label>
+        <input type="text" id="warehouseCode" value="1006DCD">
+      </div>
+      <div class="form-group">
+        <label>貨主編碼</label>
+        <input type="text" id="ownerCode" value="8526947236">
+      </div>
+      <button class="btn btn-primary" id="btnGenerate" disabled>開始生成</button>
+    </div>
+    <div style="margin-top:12px">
+      <div class="warning" id="warning"></div>
+    </div>
+  </div>
+
+  <!-- Step 3: Mapping reference -->
+  <div class="panel">
+    <div class="panel-title">物料映射對照表（CSP BC列）</div>
+    <table class="mapping-table">
+      <thead>
+        <tr><th>底表物料名稱（E列）</th><th>商品編碼（B列）</th><th>商品名稱/型號（C列）</th></tr>
+      </thead>
+      <tbody id="mappingBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Step 4: Result -->
+  <div class="panel preview-section" id="resultSection">
+    <div class="panel-title">步驟三：預覽與下載</div>
+    <div class="stats" id="stats"></div>
+    <div style="margin-bottom:12px">
+      <button class="btn btn-success" id="btnDownload" disabled>下載 Excel</button>
+    </div>
+    <div class="result-wrapper">
+      <table class="result-table" id="resultTable"></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// === CSP Material Mapping ===
+// Key: 表1 提報物料名稱 → {code: CSP B列, name: CSP C列}
+const MATERIAL_MAP = {
+  '高端保溫袋':         { code: 'Keeta007', name: '无纺布【Preminum黑】' },
+  '高端封簽':           { code: 'Keeta021', name: '封签【Preminum黑】' },
+  '無紡布袋2號':        { code: 'Keeta004', name: '无纺布【规格二双杯】' },
+  '無紡布袋3號':        { code: 'Keeta005', name: '无纺布【规格三中号】' },
+  '無紡布袋4號':        { code: 'Keeta006', name: '无纺布【规格四大号】' },
+  '杯托':              { code: 'Keeta017', name: '杯托【2托】' },
+  '大胶袋':            { code: 'Keeta001', name: '塑料袋【大】' },
+  '細膠袋':            { code: 'Keeta002', name: '塑料袋【小】' },
+  'Laisun紙袋（For Ken）': { code: 'Keeta012', name: '纸袋【定制-丽新】' },
+  '紙袋（黑色普通）':    { code: 'Keeta008', name: '纸袋【通版】' },
+  '高端纸袋（黑色普通）': { code: 'Keeta011', name: '纸袋【Preminum黑】' },
+};
+
+// === 表2 Output Columns (44 columns) ===
+const OUTPUT_HEADERS = [
+  '仓库代码','货主编码','顺丰订单类型','运费支付方式','月结账号','ERP行号','ERP订单号',
+  '承运商','承运商产品','商品编码','发货数量','商品单位','收方国家','收件方省份','收件方城市',
+  '收件方区/县','店铺名称','收方公司','收方姓名','收方电话','收方手机','收件地址',
+  '收件方电子邮箱','收件方邮编','收件方证件类型','收件方证件号码','是否需要保价','保价金额',
+  '是否需要代收货款','代收货款金额','代收货款月结卡号','单价','订单总金额','币种简码',
+  '海关编号','商品品牌','商品型号','税金结算方式','税金结算账号','订单备注','是否签回单',
+  '是否自取件','库存属性','运单打印寄件方信息来源'
+];
+
+// === Render mapping table ===
+function renderMappingTable() {
+  const tbody = document.getElementById('mappingBody');
+  tbody.innerHTML = Object.entries(MATERIAL_MAP).map(([k, v]) =>
+    `<tr><td>${k}</td><td>${v.code}</td><td>${v.name}</td></tr>`
+  ).join('');
+}
+renderMappingTable();
+
+// === File Upload ===
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const fileName = document.getElementById('fileName');
+const btnGenerate = document.getElementById('btnGenerate');
+const warning = document.getElementById('warning');
+let uploadedData = null;
+
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  fileName.textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      uploadedData = json;
+      btnGenerate.disabled = false;
+      warning.classList.remove('show');
+
+      // Quick validation - check if E column (index 4) has material names
+      let unmapped = [];
+      for (let i = 1; i < json.length; i++) {
+        const mat = json[i][4];
+        if (mat && !MATERIAL_MAP[mat] && !unmapped.includes(mat)) {
+          unmapped.push(mat);
+        }
+      }
+      if (unmapped.length) {
+        warning.innerHTML = '⚠️ 以下物料無法映射，將被跳過：<strong>' + unmapped.join('、') + '</strong>';
+        warning.classList.add('show');
+      }
+    } catch (err) {
+      alert('讀取檔案失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// === Generate ===
+btnGenerate.addEventListener('click', () => {
+  if (!uploadedData) return;
+
+  const erpStartStr = document.getElementById('erpStart').value.trim();
+  const warehouseCode = document.getElementById('warehouseCode').value.trim();
+  const ownerCode = document.getElementById('ownerCode').value.trim();
+
+  // Parse ERP start number: Keeta-6018-0115 → prefix=Keeta-6018-, num=115
+  const match = erpStartStr.match(/^(.+?)(\d+)$/);
+  if (!match) {
+    alert('ERP訂單號格式不正確，應以數字結尾，例如：Keeta-6018-0115');
+    return;
+  }
+  const erpPrefix = match[1];
+  let erpNum = parseInt(match[2]);
+  const erpPadLen = match[2].length;
+
+  // Group by shopid (B column = index 1)
+  const stores = new Map();
+  let skipped = 0;
+
+  for (let i = 1; i < uploadedData.length; i++) {
+    const row = uploadedData[i];
+    const shopid = row[1];
+    if (!shopid && shopid !== 0) continue;
+
+    const material = row[4]; // E column
+    const qty = Number(row[5]) || 0; // F column
+    const storeId = row[7] || shopid; // H column
+    const storeName = row[8] || row[2] || ''; // I column, fallback to C
+    const phone = row[9] || ''; // J column
+    const addr = row[10] || ''; // K column
+
+    // Check if material can be mapped
+    if (!material || !MATERIAL_MAP[material]) {
+      skipped++;
+      continue;
+    }
+
+    const key = String(shopid);
+    if (!stores.has(key)) {
+      stores.set(key, {
+        storeId: storeId,
+        storeName: storeName,
+        phone: phone,
+        addr: addr,
+        materials: []
+      });
+    }
+    stores.get(key).materials.push({ material, qty });
+  }
+
+  // Build output rows
+  const outputRows = [];
+  let erpLine = 1;
+  let storeCount = 0;
+
+  for (const [sid, info] of stores) {
+    const erpOrder = erpPrefix + String(erpNum).padStart(erpPadLen, '0');
+
+    for (const mat of info.materials) {
+      const mapped = MATERIAL_MAP[mat.material];
+      const row = new Array(44).fill('');
+      row[0] = warehouseCode;        // A: 仓库代码
+      row[1] = ownerCode;            // B: 货主编码
+      row[2] = '销售订单';            // C: 顺丰订单类型
+      row[3] = '寄付';               // D: 运费支付方式
+      row[4] = ownerCode;            // E: 月结账号
+      row[5] = erpLine;              // F: ERP行号
+      row[6] = erpOrder;             // G: ERP订单号
+      row[7] = '顺丰速运';            // H: 承运商
+      row[8] = '顺丰特快';            // I: 承运商产品
+      row[9] = mapped.code;          // J: 商品编码
+      row[10] = mat.qty;             // K: 发货数量
+      row[11] = '包';                // L: 商品单位
+      row[12] = '中国';              // M: 收方国家
+      row[13] = '香港特别行政区';     // N: 收件方省份
+      row[14] = '香港';              // O: 收件方城市
+      // P: 收件方区/县 = ''
+      row[16] = info.storeName;      // Q: 店铺名称
+      row[17] = info.storeId;        // R: 收方公司 (門店ID)
+      row[18] = info.storeName;      // S: 收方姓名
+      // T: 收方电话 = ''
+      row[20] = info.phone;          // U: 收方手机
+      row[21] = info.addr;           // V: 收件地址
+      // W-AJ: ''
+      row[36] = mapped.name;         // AK: 商品型号
+      // AL-AR: ''
+
+      outputRows.push(row);
+      erpLine++;
+    }
+    erpNum++;
+    storeCount++;
+  }
+
+  // Store for download
+  window.outputData = outputRows;
+  window.lastErpNum = erpNum - 1;
+
+  // Render stats
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-item"><div class="num">${storeCount}</div><div class="label">門店數</div></div>
+    <div class="stat-item"><div class="num">${outputRows.length}</div><div class="label">總行數</div></div>
+    <div class="stat-item"><div class="num">${skipped}</div><div class="label">跳過行數</div></div>
+    <div class="stat-item"><div class="num">${erpPrefix}${String(window.lastErpNum).padStart(erpPadLen, '0')}</div><div class="label">最後訂單號</div></div>
+  `;
+
+  // Render result table (show first 50 rows, key columns)
+  const previewCols = [5, 6, 9, 10, 16, 17, 20, 21, 36]; // F,G,J,K,Q,R,U,V,AK
+  const previewHeaders = previewCols.map(i => OUTPUT_HEADERS[i]);
+  let html = '<thead><tr>' + previewHeaders.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+  const showRows = Math.min(outputRows.length, 50);
+  for (let i = 0; i < showRows; i++) {
+    const r = outputRows[i];
+    html += '<tr>' + previewCols.map(c => {
+      let val = r[c];
+      if (c === 6) return `<td class="erp-order">${val}</td>`;
+      return `<td>${val}</td>`;
+    }).join('') + '</tr>';
+  }
+  if (outputRows.length > 50) {
+    html += `<tr><td colspan="${previewCols.length}" style="text-align:center;color:#999;padding:12px">... 還有 ${outputRows.length - 50} 行（下載Excel查看全部）</td></tr>`;
+  }
+  html += '</tbody>';
+  document.getElementById('resultTable').innerHTML = html;
+
+  document.getElementById('resultSection').classList.add('show');
+  document.getElementById('btnDownload').disabled = false;
+});
+
+// === Download ===
+document.getElementById('btnDownload').addEventListener('click', () => {
+  if (!window.outputData) return;
+
+  const ws = XLSX.utils.aoa_to_sheet([OUTPUT_HEADERS, ...window.outputData]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+  // Set column widths
+  ws['!cols'] = OUTPUT_HEADERS.map(h => ({ wch: Math.max(h.length * 2, 10) }));
+
+  // Freeze first row
+  ws['!freeze'] = { xSplit: '0', ySplit: '1' };
+
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}`;
+  const filename = `高端物料-顺丰出库单格式_${dateStr}.xlsx`;
+  XLSX.writeFile(wb, filename);
+});
+</script>
+</body>
+</html>

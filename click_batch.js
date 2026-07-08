@@ -1,0 +1,1 @@
+var items = document.querySelectorAll('.comp-edit-question'); var q = items[32]; var addBtns = q.querySelectorAll('.btn-add-option'); addBtns[1].click(); 'clicked batch add';

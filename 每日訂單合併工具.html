@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>每日訂單合併總表工具</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft JhengHei','PingFang TC',sans-serif;background:#f0f2f5;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{color:#333;margin-bottom:8px;font-size:22px}
+.subtitle{color:#888;font-size:13px;margin-bottom:20px}
+.drop-zone{width:100%;max-width:800px;border:2.5px dashed #aab;border-radius:16px;padding:50px 30px;text-align:center;background:#fff;cursor:pointer;transition:all .25s;margin-bottom:16px;position:relative}
+.drop-zone.dragover{border-color:#4a90d9;background:#eaf3fc;transform:scale(1.01)}
+.drop-zone-icon{font-size:48px;margin-bottom:10px;color:#aab}
+.drop-zone-text{font-size:16px;color:#555}
+.drop-zone-hint{font-size:12px;color:#aaa;margin-top:6px}
+.file-list{width:100%;max-width:800px;margin-bottom:16px}
+.file-item{background:#fff;border-radius:10px;padding:12px 18px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.file-item-info{display:flex;align-items:center;gap:10px}
+.file-item-name{font-size:14px;color:#333}
+.file-item-rows{font-size:12px;color:#888}
+.file-item-remove{cursor:pointer;color:#e74c3c;font-size:18px;border:none;background:none;padding:4px 8px;border-radius:6px;transition:background .2s}
+.file-item-remove:hover{background:#fdeaea}
+.btn-row{display:flex;gap:12px;margin-bottom:16px}
+.btn{padding:12px 32px;border:none;border-radius:10px;font-size:15px;cursor:pointer;font-weight:700;transition:all .2s}
+.btn-primary{background:#4a90d9;color:#fff}
+.btn-primary:hover{background:#357abd;transform:translateY(-1px)}
+.btn-primary:disabled{background:#b0c4de;cursor:not-allowed;transform:none}
+.btn-secondary{background:#fff;color:#555;border:1.5px solid #ccc}
+.btn-secondary:hover{background:#f5f5f5}
+.result-area{width:100%;max-width:1200px}
+.result-table-wrap{background:#fff;border-radius:12px;overflow:auto;box-shadow:0 2px 8px rgba(0,0,0,.06);max-height:500px}
+.result-table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+.result-table th{background:#4a90d9;color:#fff;padding:8px 10px;position:sticky;top:0;z-index:2;font-weight:600}
+.result-table td{padding:6px 10px;border-bottom:1px solid #eee}
+.result-table tr:hover td{background:#f0f7ff}
+.summary{background:#fff;border-radius:10px;padding:16px 20px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);font-size:13px;color:#555;max-width:1200px;width:100%}
+.summary b{color:#333}
+.empty-state{text-align:center;color:#aaa;padding:40px;font-size:14px}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-blue{background:#dbeafe;color:#2563eb}
+.tag-orange{background:#ffedd5;color:#c2410c}
+</style>
+</head>
+<body>
+<h1>每日訂單合併總表工具</h1>
+<p class="subtitle">拖入每日訂單 Excel (.xlsx)，一鍵生成總表格式</p>
+
+<div class="drop-zone" id="dropZone">
+  <div class="drop-zone-icon">📂</div>
+  <div class="drop-zone-text">拖拽每日訂單文件到這裡，或點擊選擇文件</div>
+  <div class="drop-zone-hint">支持 .xlsx / .xls，可一次拖入多個文件（按日期排序合併）</div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" multiple style="display:none">
+</div>
+
+<div class="file-list" id="fileList"></div>
+
+<div class="btn-row">
+  <button class="btn btn-primary" id="btnGenerate" disabled onclick="generate()">開始生成</button>
+  <button class="btn btn-secondary" id="btnClear" onclick="clearAll()">清空</button>
+</div>
+
+<div class="result-area" id="resultArea" style="display:none">
+  <div class="result-table-wrap" id="tableWrap"></div>
+  <div class="summary" id="summary"></div>
+  <div class="btn-row" style="margin-top:12px">
+    <button class="btn btn-primary" onclick="downloadXlsx()">導出 Excel</button>
+  </div>
+</div>
+
+<script>
+const TOTAL_COLUMNS = [
+  '提交日期','訂單類型','下單時間','售賣/贈送','商家ID','商家名稱','收貨電話','收貨地址',
+  '大膠袋','小膠袋','單杯無紡布袋','雙杯無紡布袋','3號無紡布袋','4號無紡布袋',
+  '紙袋','打印紙','紙漿杯2托','封簽','玻璃門貼','優惠貼','海報（中文版）','亞克力水牌',
+  'pos機','充電頭','充電線','紙漿杯托-4托','飲品封口紙','雙杯裝紙袋','單杯裝紙袋',
+  '備註','商家營業時間','拆單數量','調賬費用','發起調賬','總數量','物流'
+];
+
+const MATERIAL_COLS = [
+  '大膠袋','小膠袋','單杯無紡布袋','雙杯無紡布袋','3號無紡布袋','4號無紡布袋',
+  '紙袋','打印紙','紙漿杯2托','封簽','玻璃門貼','優惠貼','海報（中文版）','亞克力水牌',
+  'pos機','充電頭','充電線','紙漿杯托-4托','飲品封口紙','雙杯裝紙袋','單杯裝紙袋'
+];
+
+const DAILY_TO_TOTAL_MAP = {
+  '下單日期': null,
+  '門店ID': '商家ID',
+  '門店名稱': '商家名稱',
+  '電話': '收貨電話',
+  '地址': '收貨地址'
+};
+
+// 備註標籤 → 訂單類型 映射
+const REMARK_TO_TYPE = {
+  '問卷': '問卷',
+  '商城': '商城',
+  '新簽': '新店',
+  '新签': '新店',
+  '换机': '回收',
+  '換機': '回收',
+  '回收': '回收',
+  '三合一': '三合一'
+};
+
+let uploadedFiles = [];
+let generatedData = null;
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const btnGenerate = document.getElementById('btnGenerate');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); });
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+function handleFiles(files) {
+  for (let f of files) {
+    if (!/\.(xlsx|xls)$/i.test(f.name)) continue;
+    if (uploadedFiles.some(x => x.name === f.name)) continue;
+    uploadedFiles.push(f);
+  }
+  renderFileList();
+  btnGenerate.disabled = uploadedFiles.length === 0;
+}
+
+function renderFileList() {
+  fileList.innerHTML = '';
+  uploadedFiles.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `<div class="file-item-info"><span class="tag tag-blue">文件${i+1}</span><span class="file-item-name">${f.name}</span></div><button class="file-item-remove" onclick="removeFile(${i})">✕</button>`;
+    fileList.appendChild(div);
+  });
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+  btnGenerate.disabled = uploadedFiles.length === 0;
+}
+
+function clearAll() {
+  uploadedFiles = [];
+  generatedData = null;
+  renderFileList();
+  btnGenerate.disabled = true;
+  document.getElementById('resultArea').style.display = 'none';
+  fileInput.value = '';
+}
+
+async function generate() {
+  if (uploadedFiles.length === 0) return;
+  btnGenerate.disabled = true;
+  btnGenerate.textContent = '生成中...';
+
+  try {
+  let allRows = [];
+  for (let f of uploadedFiles) {
+    const data = await readFile(f);
+    if (!data || data.length === 0) continue;
+    const headers = Object.keys(data[0]);
+    for (const rowObj of data) {
+      allRows.push(rowObj);
+    }
+  }
+
+  if (allRows.length === 0) {
+    alert('未讀取到有效數據，請檢查文件格式');
+    btnGenerate.disabled = false;
+    btnGenerate.textContent = '開始生成';
+    return;
+  }
+
+  // Sort by 下單日期
+  allRows.sort((a, b) => {
+    const da = a['下單日期'] || '';
+    const db = b['下單日期'] || '';
+    return da.localeCompare(db);
+  });
+
+  // Convert daily format to total format
+  const totalRows = allRows.map(row => {
+    const newRow = {};
+    const orderDate = String(row['下單日期'] || '');
+    const dateMatch = orderDate.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+    newRow['提交日期'] = dateMatch ? `${dateMatch[1]}-${dateMatch[2].padStart(2,'0')}-${dateMatch[3].padStart(2,'0')}` : orderDate;
+
+    // 從備註標籤推斷訂單類型
+    const remarkRaw = String(row['備註'] || '');
+    let orderType = '問卷'; // 默認
+    const remarkMatch = remarkRaw.match(/【(.+?)】/);
+    if (remarkMatch) {
+      const label = remarkMatch[1];
+      orderType = REMARK_TO_TYPE[label] || label;
+    }
+    newRow['訂單類型'] = orderType;
+
+    newRow['下單時間'] = orderDate;
+    // 商城/問卷→售賣，其他（新店、回收、三合一等）→贈送
+    newRow['售賣/贈送'] = (orderType === '問卷' || orderType === '商城') ? '售賣' : '贈送';
+    newRow['商家ID'] = row['門店ID'] !== undefined && row['門店ID'] !== null && row['門店ID'] !== '' ? row['門店ID'] : '';
+    newRow['商家名稱'] = row['門店名稱'] || '';
+    newRow['收貨電話'] = row['電話'] || '';
+    newRow['收貨地址'] = row['地址'] || '';
+
+    let totalQty = 0;
+    MATERIAL_COLS.forEach(col => {
+      const raw = row[col];
+      const v = (raw !== undefined && raw !== null && raw !== '' && !isNaN(Number(raw))) ? Number(raw) : 0;
+      newRow[col] = v;
+      totalQty += v;
+    });
+
+    // 總表備註：去掉來源標籤【xxx】，只保留實質備註內容
+    const remarkContent = remarkRaw.replace(/【.+?】/g, '').trim();
+    newRow['備註'] = remarkContent || 0;
+
+    newRow['商家營業時間'] = row['商家營業時間'] || '';
+    newRow['拆單數量'] = 1;
+    newRow['調賬費用'] = totalQty > 0 ? 200 : 0;
+    newRow['發起調賬'] = '否';
+    newRow['總數量'] = totalQty;
+    newRow['物流'] = '順豐';
+
+    return newRow;
+  });
+
+  generatedData = totalRows;
+  renderResult(totalRows);
+  } catch(err) {
+    console.error('生成失敗:', err);
+    alert('生成失敗：' + err.message);
+  }
+  btnGenerate.disabled = false;
+  btnGenerate.textContent = '開始生成';
+}
+
+async function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, {raw:false, defval:''});
+        resolve(json);
+      } catch(err) {
+        console.error('讀取文件失敗:', err);
+        reject(err);
+      }
+    };
+    reader.onerror = e => {
+      console.error('FileReader error:', e);
+      reject(new Error('文件讀取失敗'));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function renderResult(rows) {
+  const area = document.getElementById('resultArea');
+  area.style.display = '';
+
+  // Table
+  const wrap = document.getElementById('tableWrap');
+  let html = '<table class="result-table"><thead><tr>';
+  TOTAL_COLUMNS.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>';
+    TOTAL_COLUMNS.forEach(c => {
+      let v = r[c] !== undefined && r[c] !== null ? r[c] : '';
+      if (v === 0) v = '0';
+      html += `<td>${v}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+
+  // Summary
+  const summary = document.getElementById('summary');
+  const totalRows = rows.length;
+  const totalQty = rows.reduce((s, r) => s + (r['總數量'] || 0), 0);
+  const uniqueStores = new Set(rows.map(r => r['商家ID'])).size;
+  const uniqueDates = new Set(rows.map(r => r['提交日期'])).size;
+  summary.innerHTML = `共 <b>${totalRows}</b> 筆訂單，涉及 <b>${uniqueStores}</b> 家門店，<b>${uniqueDates}</b> 個日期，物料總數 <b>${totalQty}</b>`;
+}
+
+function downloadXlsx() {
+  if (!generatedData) return;
+  const rows = generatedData.map(r => TOTAL_COLUMNS.map(c => {
+    const v = r[c];
+    return v !== undefined && v !== null ? v : '';
+  }));
+
+  const ws = XLSX.utils.aoa_to_sheet([TOTAL_COLUMNS, ...rows]);
+
+  // Column widths
+  ws['!cols'] = TOTAL_COLUMNS.map(c => {
+    if (c === '收貨地址') return {wch:40};
+    if (c === '商家名稱') return {wch:25};
+    if (c === '下單時間') return {wch:22};
+    return {wch:12};
+  });
+
+  // Freeze top row and auto filter
+  ws['!freeze'] = {xSplit:0, ySplit:1};
+  ws['!autofilter'] = {ref: XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rows.length,c:TOTAL_COLUMNS.length-1}})};
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '總表');
+  XLSX.writeFile(wb, '總表_' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '.xlsx');
+}
+</script>
+</body>
+</html>
