@@ -561,31 +561,33 @@
 
         function copyAllTracking() {
             const rows = document.querySelectorAll('#resultsBody tr');
-            const allTracking = [];
+            const allLines = [];
             
             rows.forEach(row => {
                 const tags = row.querySelectorAll('.tracking-tag');
                 if (tags.length > 0) {
+                    const texts = [];
                     tags.forEach(tag => {
                         const text = tag.childNodes[0].textContent.trim();
-                        if (text) allTracking.push(text);
+                        if (text) texts.push(text);
                     });
+                    allLines.push(texts.join('、'));
                 } else {
                     const emptyCell = row.querySelector('.empty-cell');
                     if (emptyCell) {
-                        allTracking.push('0');
+                        allLines.push('0');
                     }
                 }
             });
             
-            if (allTracking.length === 0) {
+            if (allLines.length === 0) {
                 showToast('沒有單號可複製');
                 return;
             }
             
-            const text = allTracking.join('\n');
+            const text = allLines.join('\n');
             navigator.clipboard.writeText(text).then(() => {
-                showToast(`已複製 ${allTracking.length} 條單號`);
+                showToast(`已複製 ${allLines.length} 行`);
             }).catch(() => {
                 const ta = document.createElement('textarea');
                 ta.value = text;
@@ -593,7 +595,7 @@
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                showToast(`已複製 ${allTracking.length} 條單號`);
+                showToast(`已複製 ${allLines.length} 行`);
             });
         }
 
