@@ -500,8 +500,8 @@
                 } else {
                     tr.innerHTML = `
                         <td>${escapeHtml(shopId)}</td>
-                        <td><span class="empty-cell">0</span></td>
-                        <td class="action-cell">-</td>
+                        <td><span class="empty-cell" id="empty-${escapeHtml(shopId)}">0</span></td>
+                        <td class="action-cell"><button class="copy-row-btn" onclick="copyText('0', this)">複製</button></td>
                     `;
                     notFound++;
                 }
