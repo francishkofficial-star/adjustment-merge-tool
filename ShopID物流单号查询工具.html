@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopID 物流單號查詢工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+        }
+        .upload-section.dragover {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        .upload-section.has-file {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+            border-style: solid;
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .upload-hint {
+            color: #999;
+            font-size: 13px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .file-name {
+            color: #4CAF50;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .main-content {
+            display: flex;
+            gap: 20px;
+        }
+        .input-panel, .output-panel {
+            flex: 1;
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .output-textarea {
+            background: #f8f9fa;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+        button {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .results-table th, .results-table td {
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .results-table th {
+            background: #4CAF50;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .results-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        .results-table tr:hover {
+            background: #e8f5e9;
+        }
+        .results-table td:first-child {
+            font-weight: 500;
+            color: #333;
+            width: 120px;
+        }
+        .tracking-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .tracking-numbers {
+            flex: 1;
+            word-break: break-all;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .tracking-numbers.empty {
+            color: #999;
+            font-style: italic;
+        }
+        .copy-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            background: #2196F3;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .results-table tr:hover .copy-btn {
+            opacity: 1;
+        }
+        .copy-btn:hover {
+            background: #1976D2;
+        }
+        .copy-btn.copied {
+            background: #4CAF50;
+        }
+        .table-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .copy-all-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 4px;
+            background: #FF9800;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .copy-all-btn:hover {
+            background: #F57C00;
+        }
+        .output-panel {
+            position: relative;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            textarea {
+                height: 250px;
+            }
+            .copy-btn {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ShopID 物流單號查詢工具</h1>
+        <p class="subtitle">上傳已攬收表格 → 粘貼 ShopID → 一鍵查詢順豐運單號</p>
+
+        <div class="upload-section" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">點擊或拖拽上傳「已攬收」Excel 文件</div>
+            <div class="upload-hint">支持 .xlsx 格式，收件方公司列將作為 ShopID</div>
+            <div class="file-name" id="fileName"></div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </div>
+
+        <div class="main-content">
+            <div class="input-panel">
+                <div class="panel-title">📋 輸入 ShopID（每行一個）</div>
+                <textarea id="inputArea" placeholder="在此粘貼 ShopID，每行一個...
+例如：
+721524339
+452343
+580794"></textarea>
+            </div>
+            <div class="output-panel">
+                <div class="panel-title">📤 物流單號結果</div>
+                <button class="copy-all-btn" id="copyAllBtn" onclick="copyAllTracking()" style="display:none;">📋 複製全部單號</button>
+                <div class="table-wrapper" id="tableWrapper" style="display:none;">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr><th>ShopID</th><th>順豐運單號</th></tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+                <textarea id="outputArea" class="output-textarea" readonly placeholder="查詢結果將顯示在這裡...
+多單號用逗號分隔"></textarea>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="lookup()">🔍 查詢單號</button>
+            <button class="btn-secondary" onclick="copyResult()">📋 複製結果</button>
+            <button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
+        </div>
+
+        <div class="stats" id="stats" style="display:none;">
+            <div class="stat-item">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">總計查詢</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statFound">0</div>
+                <div class="stat-label">匹配成功</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statNotFound">0</div>
+                <div class="stat-label">未找到</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let mapping = {};
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const inputArea = document.getElementById('inputArea');
+        const outputArea = document.getElementById('outputArea');
+        const toast = document.getElementById('toast');
+
+        // 文件上传
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+                showToast('請上傳 Excel 文件（.xlsx 或 .xls）');
+                return;
+            }
+            
+            fileName.textContent = '已選擇：' + file.name;
+            dropZone.classList.add('has-file');
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    if (rows.length < 2) {
+                        showToast('文件為空或格式不正確');
+                        return;
+                    }
+                    
+                    // 查找「收件方公司」和「順豐運單號」列索引
+                    const header = rows[0];
+                    let companyIdx = -1;
+                    let trackingIdx = -1;
+                    
+                    header.forEach((col, idx) => {
+                        if (col && col.toString().includes('收件方公司')) companyIdx = idx;
+                        if (col && col.toString().includes('順豐運單號')) trackingIdx = idx;
+                    });
+                    
+                    if (companyIdx === -1 || trackingIdx === -1) {
+                        showToast('未找到「收件方公司」或「順豐運單號」列，請檢查文件格式');
+                        return;
+                    }
+                    
+                    mapping = {};
+                    let count = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row[companyIdx] && row[trackingIdx]) {
+                            const shopId = row[companyIdx].toString().trim();
+                            const tracking = row[trackingIdx].toString().trim();
+                            if (!mapping[shopId]) mapping[shopId] = [];
+                            if (!mapping[shopId].includes(tracking)) {
+                                mapping[shopId].push(tracking);
+                                count++;
+                            }
+                        }
+                    }
+                    
+                    showToast(`成功載入 ${Object.keys(mapping).length} 個 ShopID 映射關係（${count} 條單號）`);
+                } catch (err) {
+                    showToast('解析文件失敗：' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function lookup() {
+            if (Object.keys(mapping).length === 0) {
+                showToast('請先上傳已攬收 Excel 文件');
+                return;
+            }
+            
+            const lines = inputArea.value.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) {
+                showToast('請輸入 ShopID');
+                return;
+            }
+            
+            let found = 0;
+            let notFound = 0;
+            const results = [];
+            const tableRows = [];
+            
+            lines.forEach(shopId => {
+                const trackings = mapping[shopId];
+                if (trackings && trackings.length > 0) {
+                    const trackingStr = trackings.join('、');
+                    results.push(trackingStr);
+                    tableRows.push({ shopId, trackingStr, hasData: true });
+                    found++;
+                } else {
+                    results.push('');
+                    tableRows.push({ shopId, trackingStr: '（未找到）', hasData: false });
+                    notFound++;
+                }
+            });
+            
+            // 同時更新文本框和表格
+            outputArea.value = results.join('\n');
+            renderTable(tableRows);
+            
+            document.getElementById('stats').style.display = 'flex';
+            document.getElementById('statTotal').textContent = lines.length;
+            document.getElementById('statFound').textContent = found;
+            document.getElementById('statNotFound').textContent = notFound;
+            
+            showToast(`查詢完成：${found} 個匹配，${notFound} 個未找到`);
+        }
+
+        function renderTable(rows) {
+            const tbody = document.getElementById('resultsBody');
+            const wrapper = document.getElementById('tableWrapper');
+            const copyAllBtn = document.getElementById('copyAllBtn');
+            tbody.innerHTML = '';
+            
+            rows.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${escapeHtml(row.shopId)}</td>
+                    <td>
+                        <div class="tracking-cell">
+                            <span class="tracking-numbers ${!row.hasData ? 'empty' : ''}">${escapeHtml(row.trackingStr)}</span>
+                            ${row.hasData ? `<button class="copy-btn" onclick="copyTracking(this, '${escapeHtml(row.trackingStr).replace(/'/g, "\\'")}')">複製</button>` : ''}
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            wrapper.style.display = 'block';
+            copyAllBtn.style.display = 'inline-block';
+            outputArea.style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function copyTracking(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '已複製';
+                btn.classList.add('copied');
+                showToast('已複製：' + text.substring(0, 30) + (text.length > 30 ? '...' : ''));
+                setTimeout(() => {
+                    btn.textContent = '複製';
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已複製到剪貼板');
+            });
+        }
+
+        function copyAllTracking() {
+            const allTracking = [];
+            const rows = document.querySelectorAll('#resultsBody tr');
+            rows.forEach(row => {
+                const cell = row.querySelector('.tracking-numbers');
+                if (cell && !cell.classList.contains('empty')) {
+                    allTracking.push(cell.textContent);
+                }
+            });
+            
+            if (allTracking.length === 0) {
+                showToast('沒有單號可複製');
+                return;
+            }
+            
+            const text = allTracking.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已複製 ${allTracking.length} 條單號`);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast(`已複製 ${allTracking.length} 條單號`);
+            });
+        }
+
+        function copyResult() {
+            if (!outputArea.value && document.getElementById('tableWrapper').style.display === 'none') {
+                showToast('沒有結果可複製');
+                return;
+            }
+            outputArea.select();
+            document.execCommand('copy');
+            showToast('已複製到剪貼板');
+        }
+
+        function clearAll() {
+            inputArea.value = '';
+            outputArea.value = '';
+            document.getElementById('resultsBody').innerHTML = '';
+            document.getElementById('tableWrapper').style.display = 'none';
+            document.getElementById('copyAllBtn').style.display = 'none';
+            outputArea.style.display = 'block';
+            document.getElementById('stats').style.display = 'none';
+            showToast('已清空');
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // 支持 Ctrl+Enter 快速查询
+        inputArea.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') lookup();
+        });
+    </script>
+</body>
+</html>
