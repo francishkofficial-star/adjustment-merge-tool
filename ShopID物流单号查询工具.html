@@ -565,10 +565,17 @@
             
             rows.forEach(row => {
                 const tags = row.querySelectorAll('.tracking-tag');
-                tags.forEach(tag => {
-                    const text = tag.childNodes[0].textContent.trim();
-                    if (text) allTracking.push(text);
-                });
+                if (tags.length > 0) {
+                    tags.forEach(tag => {
+                        const text = tag.childNodes[0].textContent.trim();
+                        if (text) allTracking.push(text);
+                    });
+                } else {
+                    const emptyCell = row.querySelector('.empty-cell');
+                    if (emptyCell) {
+                        allTracking.push('0');
+                    }
+                }
             });
             
             if (allTracking.length === 0) {
