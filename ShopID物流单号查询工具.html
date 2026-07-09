@@ -17,7 +17,7 @@
             min-height: 100vh;
         }
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             background: #fff;
             border-radius: 12px;
@@ -75,51 +75,34 @@
             font-weight: 600;
             margin-top: 8px;
         }
-        .main-content {
+        .toolbar {
             display: flex;
-            gap: 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        .input-panel, .output-panel {
-            flex: 1;
+        .toolbar-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         .panel-title {
             font-size: 16px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        textarea {
-            width: 100%;
-            height: 400px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 14px;
-            line-height: 1.6;
-            resize: vertical;
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
-        }
-        .output-textarea {
-            background: #f8f9fa;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-            justify-content: center;
         }
         button {
-            padding: 12px 28px;
+            padding: 8px 18px;
             border: none;
             border-radius: 6px;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
             font-weight: 500;
@@ -144,6 +127,111 @@
         }
         .btn-danger:hover {
             background: #d32f2f;
+        }
+        .btn-copy {
+            background: #FF9800;
+            color: white;
+        }
+        .btn-copy:hover {
+            background: #F57C00;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .main-table th, .main-table td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .main-table th {
+            background: #4CAF50;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .main-table th:first-child {
+            width: 140px;
+        }
+        .main-table th:last-child {
+            width: 80px;
+            text-align: center;
+        }
+        .main-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .main-table tr:hover {
+            background: #e8f5e9;
+        }
+        .main-table td:first-child {
+            font-weight: 500;
+            color: #333;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .tracking-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tracking-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e3f2fd;
+            color: #1565C0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            border: 1px solid #bbdefb;
+        }
+        .tracking-tag .copy-icon {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            font-size: 12px;
+        }
+        .tracking-tag .copy-icon:hover {
+            opacity: 1;
+        }
+        .empty-cell {
+            color: #bbb;
+            font-style: italic;
+        }
+        .action-cell {
+            text-align: center;
+        }
+        .copy-row-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            background: #2196F3;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .main-table tr:hover .copy-row-btn {
+            opacity: 1;
+        }
+        .copy-row-btn:hover {
+            background: #1976D2;
+        }
+        .copy-row-btn.copied {
+            background: #4CAF50;
+            opacity: 1;
         }
         .stats {
             display: flex;
@@ -185,103 +273,34 @@
         .toast.show {
             opacity: 1;
         }
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
+        .input-section {
+            margin-bottom: 20px;
+        }
+        .input-label {
             font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
         }
-        .results-table th, .results-table td {
-            border: 1px solid #ddd;
-            padding: 10px 12px;
-            text-align: left;
-        }
-        .results-table th {
-            background: #4CAF50;
-            color: white;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-        }
-        .results-table tr:nth-child(even) {
-            background: #f8f9fa;
-        }
-        .results-table tr:hover {
-            background: #e8f5e9;
-        }
-        .results-table td:first-child {
-            font-weight: 500;
-            color: #333;
-            width: 120px;
-        }
-        .tracking-cell {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-        .tracking-numbers {
-            flex: 1;
-            word-break: break-all;
-            font-family: 'Consolas', 'Monaco', monospace;
-        }
-        .tracking-numbers.empty {
-            color: #999;
-            font-style: italic;
-        }
-        .copy-btn {
-            padding: 4px 10px;
-            border: none;
-            border-radius: 4px;
-            background: #2196F3;
-            color: white;
-            font-size: 12px;
-            cursor: pointer;
-            white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .results-table tr:hover .copy-btn {
-            opacity: 1;
-        }
-        .copy-btn:hover {
-            background: #1976D2;
-        }
-        .copy-btn.copied {
-            background: #4CAF50;
-        }
-        .table-wrapper {
-            max-height: 400px;
-            overflow-y: auto;
+        .id-input {
+            width: 100%;
+            min-height: 80px;
             border: 1px solid #ddd;
             border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
         }
-        .copy-all-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            padding: 6px 14px;
-            border: none;
-            border-radius: 4px;
-            background: #FF9800;
-            color: white;
-            font-size: 13px;
-            cursor: pointer;
-            z-index: 10;
-        }
-        .copy-all-btn:hover {
-            background: #F57C00;
-        }
-        .output-panel {
-            position: relative;
+        .id-input:focus {
+            outline: none;
+            border-color: #4CAF50;
         }
         @media (max-width: 768px) {
-            .main-content {
+            .toolbar {
                 flex-direction: column;
+                align-items: stretch;
             }
-            textarea {
-                height: 250px;
-            }
-            .copy-btn {
+            .copy-row-btn {
                 opacity: 1;
             }
         }
@@ -300,36 +319,42 @@
             <input type="file" id="fileInput" accept=".xlsx,.xls">
         </div>
 
-        <div class="main-content">
-            <div class="input-panel">
-                <div class="panel-title">📋 輸入 ShopID（每行一個）</div>
-                <textarea id="inputArea" placeholder="在此粘貼 ShopID，每行一個...
+        <div class="input-section">
+            <div class="input-label">📋 粘貼 ShopID（每行一個，支持從 Excel 直接粘貼）</div>
+            <textarea class="id-input" id="inputArea" placeholder="在此粘貼 ShopID，每行一個...
 例如：
 721524339
 452343
 580794"></textarea>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <span class="panel-title">📤 查詢結果</span>
             </div>
-            <div class="output-panel">
-                <div class="panel-title">📤 物流單號結果</div>
-                <button class="copy-all-btn" id="copyAllBtn" onclick="copyAllTracking()" style="display:none;">📋 複製全部單號</button>
-                <div class="table-wrapper" id="tableWrapper" style="display:none;">
-                    <table class="results-table" id="resultsTable">
-                        <thead>
-                            <tr><th>ShopID</th><th>順豐運單號</th></tr>
-                        </thead>
-                        <tbody id="resultsBody"></tbody>
-                    </table>
-                </div>
-                <textarea id="outputArea" class="output-textarea" readonly placeholder="查詢結果將顯示在這裡...
-多單號用逗號分隔"></textarea>
+            <div class="toolbar-right">
+                <button class="btn-primary" onclick="lookup()">🔍 查詢單號</button>
+                <button class="btn-copy" onclick="copyAllTracking()">📋 複製全部單號</button>
+                <button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
             </div>
         </div>
 
-        <div class="btn-group">
-            <button class="btn-primary" onclick="lookup()">🔍 查詢單號</button>
-            <button class="btn-secondary" onclick="copyResult()">📋 複製結果</button>
-            <button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
-        </div>
+        <table class="main-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>ShopID</th>
+                    <th>順豐運單號</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <tr>
+                    <td colspan="3" style="text-align:center;color:#999;padding:40px;">
+                        請上傳文件並輸入 ShopID 後點擊查詢
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
         <div class="stats" id="stats" style="display:none;">
             <div class="stat-item">
@@ -356,7 +381,6 @@
         const fileInput = document.getElementById('fileInput');
         const fileName = document.getElementById('fileName');
         const inputArea = document.getElementById('inputArea');
-        const outputArea = document.getElementById('outputArea');
         const toast = document.getElementById('toast');
 
         // 文件上传
@@ -404,7 +428,6 @@
                         return;
                     }
                     
-                    // 查找「收件方公司」和「順豐運單號」列索引
                     const header = rows[0];
                     let companyIdx = -1;
                     let trackingIdx = -1;
@@ -456,26 +479,35 @@
             
             let found = 0;
             let notFound = 0;
-            const results = [];
-            const tableRows = [];
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
             
             lines.forEach(shopId => {
                 const trackings = mapping[shopId];
+                const tr = document.createElement('tr');
+                
                 if (trackings && trackings.length > 0) {
-                    const trackingStr = trackings.join('、');
-                    results.push(trackingStr);
-                    tableRows.push({ shopId, trackingStr, hasData: true });
+                    const tagsHtml = trackings.map(t => 
+                        `<span class="tracking-tag">${escapeHtml(t)}<span class="copy-icon" onclick="copyText('${escapeHtml(t).replace(/'/g, "\\'")}', this)" title="複製">📋</span></span>`
+                    ).join('');
+                    
+                    tr.innerHTML = `
+                        <td>${escapeHtml(shopId)}</td>
+                        <td><div class="tracking-list">${tagsHtml}</div></td>
+                        <td class="action-cell"><button class="copy-row-btn" onclick="copyRowTracking(this, '${escapeHtml(trackings.join('、')).replace(/'/g, "\\'")}')">複製</button></td>
+                    `;
                     found++;
                 } else {
-                    results.push('');
-                    tableRows.push({ shopId, trackingStr: '（未找到）', hasData: false });
+                    tr.innerHTML = `
+                        <td>${escapeHtml(shopId)}</td>
+                        <td><span class="empty-cell">（未找到）</span></td>
+                        <td class="action-cell">-</td>
+                    `;
                     notFound++;
                 }
+                
+                tbody.appendChild(tr);
             });
-            
-            // 同時更新文本框和表格
-            outputArea.value = results.join('\n');
-            renderTable(tableRows);
             
             document.getElementById('stats').style.display = 'flex';
             document.getElementById('statTotal').textContent = lines.length;
@@ -485,66 +517,58 @@
             showToast(`查詢完成：${found} 個匹配，${notFound} 個未找到`);
         }
 
-        function renderTable(rows) {
-            const tbody = document.getElementById('resultsBody');
-            const wrapper = document.getElementById('tableWrapper');
-            const copyAllBtn = document.getElementById('copyAllBtn');
-            tbody.innerHTML = '';
-            
-            rows.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${escapeHtml(row.shopId)}</td>
-                    <td>
-                        <div class="tracking-cell">
-                            <span class="tracking-numbers ${!row.hasData ? 'empty' : ''}">${escapeHtml(row.trackingStr)}</span>
-                            ${row.hasData ? `<button class="copy-btn" onclick="copyTracking(this, '${escapeHtml(row.trackingStr).replace(/'/g, "\\'")}')">複製</button>` : ''}
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            
-            wrapper.style.display = 'block';
-            copyAllBtn.style.display = 'inline-block';
-            outputArea.style.display = 'none';
-        }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
 
-        function copyTracking(btn, text) {
+        function copyText(text, iconEl) {
             navigator.clipboard.writeText(text).then(() => {
-                btn.textContent = '已複製';
-                btn.classList.add('copied');
-                showToast('已複製：' + text.substring(0, 30) + (text.length > 30 ? '...' : ''));
-                setTimeout(() => {
-                    btn.textContent = '複製';
-                    btn.classList.remove('copied');
-                }, 1500);
+                showToast('已複製：' + text);
+                iconEl.textContent = '✓';
+                setTimeout(() => iconEl.textContent = '📋', 1000);
             }).catch(() => {
-                // fallback
                 const ta = document.createElement('textarea');
                 ta.value = text;
                 document.body.appendChild(ta);
                 ta.select();
                 document.execCommand('copy');
                 document.body.removeChild(ta);
-                showToast('已複製到剪貼板');
+                showToast('已複製：' + text);
+            });
+        }
+
+        function copyRowTracking(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '已複製';
+                btn.classList.add('copied');
+                showToast('已複製該行所有單號');
+                setTimeout(() => {
+                    btn.textContent = '複製';
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已複製該行所有單號');
             });
         }
 
         function copyAllTracking() {
-            const allTracking = [];
             const rows = document.querySelectorAll('#resultsBody tr');
+            const allTracking = [];
+            
             rows.forEach(row => {
-                const cell = row.querySelector('.tracking-numbers');
-                if (cell && !cell.classList.contains('empty')) {
-                    allTracking.push(cell.textContent);
-                }
+                const tags = row.querySelectorAll('.tracking-tag');
+                tags.forEach(tag => {
+                    const text = tag.childNodes[0].textContent.trim();
+                    if (text) allTracking.push(text);
+                });
             });
             
             if (allTracking.length === 0) {
@@ -566,23 +590,15 @@
             });
         }
 
-        function copyResult() {
-            if (!outputArea.value && document.getElementById('tableWrapper').style.display === 'none') {
-                showToast('沒有結果可複製');
-                return;
-            }
-            outputArea.select();
-            document.execCommand('copy');
-            showToast('已複製到剪貼板');
-        }
-
         function clearAll() {
             inputArea.value = '';
-            outputArea.value = '';
-            document.getElementById('resultsBody').innerHTML = '';
-            document.getElementById('tableWrapper').style.display = 'none';
-            document.getElementById('copyAllBtn').style.display = 'none';
-            outputArea.style.display = 'block';
+            document.getElementById('resultsBody').innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align:center;color:#999;padding:40px;">
+                        請上傳文件並輸入 ShopID 後點擊查詢
+                    </td>
+                </tr>
+            `;
             document.getElementById('stats').style.display = 'none';
             showToast('已清空');
         }
