@@ -1,427 +1,627 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>物料調賬底表 7.1-7.7 合併工具</title>
-<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: "Microsoft JhengHei", "PingFang HK", sans-serif;
-  background: #f0f2f5;
-  color: #333;
-  padding: 20px;
-}
-h1 { text-align: center; margin-bottom: 8px; color: #1a1a2e; font-size: 22px; }
-.subtitle { text-align: center; color: #666; margin-bottom: 20px; font-size: 14px; }
-.toolbar {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-.btn {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.btn-blue { background: #2980b9; color: #fff; }
-.btn-blue:hover { background: #1a6da0; }
-.btn-green { background: #27ae60; color: #fff; }
-.btn-green:hover { background: #1e8449; }
-.btn-purple { background: #8e44ad; color: #fff; }
-.btn-purple:hover { background: #7d3c98; }
-.file-input-wrapper {
-  position: relative;
-  overflow: hidden;
-  display: inline-block;
-}
-.file-input-wrapper input[type=file] {
-  position: absolute;
-  left: -9999px;
-}
-.stats-bar {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  flex-wrap: wrap;
-  font-size: 14px;
-}
-.stats-bar .stat-item { text-align: center; }
-.stats-bar .stat-num { font-size: 20px; font-weight: bold; color: #2980b9; }
-.stats-bar .stat-label { color: #888; font-size: 12px; margin-top: 2px; }
-.search-box {
-  width: 100%;
-  max-width: 400px;
-  padding: 10px 14px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: inherit;
-  margin: 0 auto 16px;
-  display: block;
-}
-.table-wrap {
-  overflow-x: auto;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  max-height: 70vh;
-  overflow-y: auto;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 1600px;
-}
-th, td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #e8e8e8;
-  border-right: 1px solid #f0f0f0;
-  font-size: 13px;
-  white-space: nowrap;
-}
-th {
-  background: #2c3e50;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  font-weight: 600;
-  text-align: center;
-}
-td { text-align: center; }
-td.shop-id { font-family: monospace; font-weight: 600; color: #2c3e50; }
-td.shop-name { text-align: left; max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
-td.address { text-align: left; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }
-td.amount { text-align: right; font-weight: 600; color: #e67e22; }
-td.remark { text-align: left; color: #555; white-space: normal; max-width: 250px; }
-tr:hover { background: #f5f9fc; }
-tr.merged-row { background: #fffde7; }
-tr.merged-row:hover { background: #fff9c4; }
-td.qty-zero { color: #ccc; }
-td.qty-nonzero { font-weight: 600; color: #2c3e50; }
-.empty-msg { text-align: center; padding: 60px; color: #999; font-size: 16px; }
-.drag-area {
-  border: 2px dashed #bbb;
-  border-radius: 8px;
-  padding: 25px;
-  text-align: center;
-  color: #888;
-  margin-bottom: 16px;
-  background: #fafbfc;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-.drag-area.dragover {
-  border-color: #2980b9;
-  background: #eaf5fb;
-}
-.formula-hint {
-  text-align: center;
-  color: #888;
-  font-size: 12px;
-  margin-bottom: 12px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopID 物流單號查詢工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+        }
+        .upload-section.dragover {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+        .upload-section.has-file {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+            border-style: solid;
+        }
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+        .upload-text {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .upload-hint {
+            color: #999;
+            font-size: 13px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .file-name {
+            color: #4CAF50;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .toolbar-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #45a049;
+        }
+        .btn-secondary {
+            background: #2196F3;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #d32f2f;
+        }
+        .btn-copy {
+            background: #FF9800;
+            color: white;
+        }
+        .btn-copy:hover {
+            background: #F57C00;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .main-table th, .main-table td {
+            border: 1px solid #e0e0e0;
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .main-table th {
+            background: #4CAF50;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .main-table th:first-child {
+            width: 140px;
+        }
+        .main-table th:last-child {
+            width: 80px;
+            text-align: center;
+        }
+        .main-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .main-table tr:hover {
+            background: #e8f5e9;
+        }
+        .main-table td:first-child {
+            font-weight: 500;
+            color: #333;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+        .tracking-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .tracking-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #e3f2fd;
+            color: #1565C0;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            border: 1px solid #bbdefb;
+        }
+        .tracking-tag .copy-icon {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+            font-size: 12px;
+        }
+        .tracking-tag .copy-icon:hover {
+            opacity: 1;
+        }
+        .empty-cell {
+            color: #bbb;
+            font-style: italic;
+        }
+        .action-cell {
+            text-align: center;
+        }
+        .copy-row-btn {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            background: #2196F3;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .main-table tr:hover .copy-row-btn {
+            opacity: 1;
+        }
+        .copy-row-btn:hover {
+            background: #1976D2;
+        }
+        .copy-row-btn.copied {
+            background: #4CAF50;
+            opacity: 1;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 16px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        .input-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .id-input {
+            width: 100%;
+            min-height: 80px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            resize: vertical;
+        }
+        .id-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .copy-row-btn {
+                opacity: 1;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <h1>ShopID 物流單號查詢工具</h1>
+        <p class="subtitle">上傳已攬收表格 → 粘貼 ShopID → 一鍵查詢順豐運單號</p>
 
-<h1>物料調賬底表 7.1-7.7 合併工具</h1>
-<p class="subtitle">自動合併相同商家ID · 金額求和 · 備註欄生成物料名稱*數量</p>
+        <div class="upload-section" id="dropZone">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">點擊或拖拽上傳「已攬收」Excel 文件</div>
+            <div class="upload-hint">支持 .xlsx 格式，收件方公司列將作為 ShopID</div>
+            <div class="file-name" id="fileName"></div>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+        </div>
 
-<div class="drag-area" id="dragArea">
-  <p>拖拽 .xlsx 文件到此處，或點擊下方按鈕選擇文件</p>
-</div>
+        <div class="input-section">
+            <div class="input-label">📋 粘貼 ShopID（每行一個，支持從 Excel 直接粘貼）</div>
+            <textarea class="id-input" id="inputArea" placeholder="在此粘貼 ShopID，每行一個...
+例如：
+721524339
+452343
+580794"></textarea>
+        </div>
 
-<div class="toolbar">
-  <div class="file-input-wrapper">
-    <button class="btn btn-blue" onclick="document.getElementById('fileInput').click()">選擇文件</button>
-    <input type="file" id="fileInput" accept=".xlsx,.xls">
-  </div>
-  <button class="btn btn-blue" onclick="processFile()">開始合併</button>
-  <button class="btn btn-green" onclick="exportExcel()">導出 Excel</button>
-  <button class="btn btn-purple" onclick="exportCSV()">導出 CSV</button>
-</div>
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <span class="panel-title">📤 查詢結果</span>
+            </div>
+            <div class="toolbar-right">
+                <button class="btn-primary" onclick="lookup()">🔍 查詢單號</button>
+                <button class="btn-copy" onclick="copyAllTracking()">📋 複製全部單號</button>
+                <button class="btn-danger" onclick="clearAll()">🗑️ 清空</button>
+            </div>
+        </div>
 
-<p class="formula-hint">調賬費用公式：大膠袋*29 + 小膠袋*22 + 單杯無紡布袋*150 + 雙杯無紡布袋*180 + 3號無紡布袋*230 + 4號無紡布袋*280 + 紙袋*200 + 紙漿杯2托*200 + 紙漿杯托-4托*200 + 飲品封口紙*10 + 雙杯裝紙袋*360 + 單杯裝紙袋*320</p>
+        <table class="main-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>ShopID</th>
+                    <th>順豐運單號</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <tr>
+                    <td colspan="3" style="text-align:center;color:#999;padding:40px;">
+                        請上傳文件並輸入 ShopID 後點擊查詢
+                    </td>
+                </tr>
+            </tbody>
+        </table>
 
-<div class="stats-bar" id="statsBar">
-  <div class="stat-item"><div class="stat-num" id="statRaw">0</div><div class="stat-label">原始行數</div></div>
-  <div class="stat-item"><div class="stat-num" id="statMerged">0</div><div class="stat-label">合併後行數</div></div>
-  <div class="stat-item"><div class="stat-num" id="statDup">0</div><div class="stat-label">重複ID數</div></div>
-  <div class="stat-item"><div class="stat-num" id="statTotal">0</div><div class="stat-label">總金額(HKD)</div></div>
-</div>
+        <div class="stats" id="stats" style="display:none;">
+            <div class="stat-item">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">總計查詢</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statFound">0</div>
+                <div class="stat-label">匹配成功</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="statNotFound">0</div>
+                <div class="stat-label">未找到</div>
+            </div>
+        </div>
+    </div>
 
-<input type="text" class="search-box" id="searchBox" placeholder="搜索商家ID / 名稱 / 備註..." oninput="filterTable()">
+    <div class="toast" id="toast"></div>
 
-<div class="table-wrap" id="tableWrap">
-  <div class="empty-msg">請上傳 Excel 文件後點擊「開始合併」</div>
-</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let mapping = {};
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const inputArea = document.getElementById('inputArea');
+        const toast = document.getElementById('toast');
 
-<script>
-const MATERIAL_COLS = [
-  { letter: 'F', name: '大膠袋', price: 29 },
-  { letter: 'G', name: '小膠袋', price: 22 },
-  { letter: 'H', name: '單杯無紡布袋', price: 150 },
-  { letter: 'I', name: '雙杯無紡布袋', price: 180 },
-  { letter: 'J', name: '3號無紡布袋', price: 230 },
-  { letter: 'K', name: '4號無紡布袋', price: 280 },
-  { letter: 'L', name: '紙袋', price: 200 },
-  { letter: 'M', name: '紙漿杯2托', price: 200 },
-  { letter: 'N', name: '紙漿杯托-4托', price: 200 },
-  { letter: 'O', name: '飲品封口紙', price: 10 },
-  { letter: 'P', name: '雙杯裝紙袋', price: 360 },
-  { letter: 'Q', name: '單杯裝紙袋', price: 320 },
-];
+        // 文件上传
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
 
-let rawData = [];
-let mergedData = [];
-let rawRowCount = 0;
-let dupCount = 0;
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
 
-const PRELOADED = [{"shop_id": "389158", "submit_date": "2026-07-07", "shop_name": "麥當勞（嘉業）McDonalds", "phone": "852-23802850", "address": "九龍旺角荔枝角道1號嘉業大廈地下(部分)及1樓G/F (part) & 1/F, Ka Yip Building, 1 Lai Chi Kok Road, Mongkok, Kowloon", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "392451", "submit_date": "2026-07-06", "shop_name": "麥當勞（西洋菜）McDonalds", "phone": "852-23842728", "address": "九龍旺角彌敦道612-618號好望角大廈地下(部分)及地庫G/F (part) and basement of Good Hope Building, 612-618 Nathan Road, Mongkok, Kowloon", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "399024", "submit_date": "2026-07-02", "shop_name": "RotiKingIndianFusionCuisine", "phone": "852-24143030", "address": "香港大角咀杉樹街4-16號金基大廈地下4號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "408881", "submit_date": "2026-07-02", "shop_name": "麥當勞(萬盛閣)McDonalds", "phone": "852-23906570", "address": "九龍深水埗荔枝角道150-174號萬盛閣地下1號舖Shop 1, G/F., Man Shing Court, 150-174 Lai Chi Kok Road, Sham Shui Po, Kowloon", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "408882", "submit_date": "2026-07-06", "shop_name": "麥當勞(奧海城二期II)McDonalds", "phone": "852-27404145", "address": "九龍奧海城奧海城二期地面 G40, G41 及 G42 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "408884", "submit_date": "2026-07-03", "shop_name": "麥當勞(新望大廈)McDonalds", "phone": "852-23917608", "address": "九龍旺角彌敦道763-767號新望大廈地庫及地下入口", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "408910", "submit_date": "2026-07-03", "shop_name": "CrispiBun", "phone": "852-62000151", "address": "尖沙咀漆咸道南29-31號溫莎大廈地12A號舖", "materials": {"大膠袋": 0, "小膠袋": 5, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*5"}, {"shop_id": "415463", "submit_date": "2026-07-06", "shop_name": "麥當勞（大角咀）McDonalds", "phone": "852-23911830", "address": "九龍大角咀道97-105大同新邨大方樓地下J1，J2號舖舆一樓J1號舖Shop J1, J2, G/F, Tai Fong House, Cosmopolitan Estate, 97-105 Tai Kok Tsui Road, Kowloon", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "448374", "submit_date": "2026-07-06", "shop_name": "麥當勞（寶勒巷）McDonalds", "phone": "852-23694398", "address": "寶勒巷3號萬事昌廣場地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "448595", "submit_date": "2026-07-02", "shop_name": "ChilliLime(MONTEREYPlace)", "phone": "852-22460055", "address": "將軍澳澳南海岸唐俊街23號MONTEREY Place地下G07號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 1, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "雙杯無紡布袋*1, 4號無紡布袋*1"}, {"shop_id": "448618", "submit_date": "2026-07-02", "shop_name": "麥當勞(囍寓)McDonalds", "phone": "852-28277537", "address": "香港灣仔莊士敦道74-80號地庫及地下部份", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "448619", "submit_date": "2026-07-06", "shop_name": "麥當勞(干諾道中)McDonalds", "phone": "852-24786588", "address": "香港干諾道中30-32號莊氏大廈地下高層舆地下底層", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "448903", "submit_date": "2026-07-06", "shop_name": "麥當勞(寶達)McDonalds", "phone": "852-21904206", "address": "九龍觀塘寶達邨寶達商場2樓206號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "449000", "submit_date": "2026-07-02", "shop_name": "麥當勞(富善)McDonalds", "phone": "852-26670558", "address": "新界大埔富善邨富善商場地下G25號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "449001", "submit_date": "2026-07-02", "shop_name": "麥當勞(元朗廣場II)McDonalds", "phone": "852-24783431", "address": "新界元朗青山公路元朗廣場地下071-078號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "449037", "submit_date": "2026-07-06", "shop_name": "銀杏館銀杏時光(有機健康之選)", "phone": "852-59057930", "address": "基利路7號太吉樓地下4及5號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "450156", "submit_date": "2026-07-02", "shop_name": "元氣壽司(迎海薈)GenkiSushi", "phone": "852-29670688", "address": "新界馬鞍山烏溪沙路8號, 迎海薈地下5A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "450300", "submit_date": "2026-07-06", "shop_name": "麥當勞（赤柱廣場II）McDonalds", "phone": "852-28130655", "address": "香港赤柱佳美道23號赤柱廣場地下G02及G03號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "450671", "submit_date": "2026-07-02", "shop_name": "麥當勞(慈雲山)McDonalds", "phone": "852-27528426", "address": "九龍慈雲山毓華街23號慈雲山中心333號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "450672", "submit_date": "2026-07-02", "shop_name": "麥當勞(長亨)McDonalds", "phone": "852-24975055", "address": "新界青衣長亨邨長亨商場LG1樓115-117號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "450880", "submit_date": "2026-07-03", "shop_name": "SheerCoffee(必試單品咖啡吐司小吃)", "phone": "852-55436943", "address": "香港中環卑利街18b號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "451667", "submit_date": "2026-07-02", "shop_name": "麥當勞（家維邨）McDonalds", "phone": "852-29945909", "address": "馬頭圍道46-48號家維邨家廉樓地下上層19-20號舖及家興樓地下上層5-6號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "451842", "submit_date": "2026-07-06", "shop_name": "本延鍋物（灣仔）PanyinShabu", "phone": "852-98823061", "address": "謝斐道379-389號特麗樓地下6-7號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "451899", "submit_date": "2026-07-06", "shop_name": "鐵板神蒜福星高照二人套餐", "phone": "852-97199907", "address": "東涌逸東街8號逸東商場地下逸東街市7號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "451989", "submit_date": "2026-07-07", "shop_name": "MIRRORBURGER(皇后大道西)", "phone": "852-52923545", "address": "皇后大道西194號地舖", "materials": {"大膠袋": 0, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*3"}, {"shop_id": "452066", "submit_date": "2026-07-06", "shop_name": "麥當勞(新屯門)McDonalds", "phone": "852-24683707", "address": "新界屯門龍門路55-65號新屯門中心商場2樓9-11號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "452187", "submit_date": "2026-07-02", "shop_name": "麥當勞(禮頓中心)McDonalds", "phone": "852-31264113", "address": "香港銅鑼灣禮頓道77號禮頓中心地庫B2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "452188", "submit_date": "2026-07-07", "shop_name": "麥當勞(沙角)McDonalds", "phone": "852-28779132", "address": "新界沙田沙角村沙角商場二樓239號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "452189", "submit_date": "2026-07-06", "shop_name": "麥當勞(厚德II)McDonalds", "phone": "852-27043722", "address": "新界西貢將軍澳常寧路2號TKO Gateway西翼一樓W102號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "452219", "submit_date": "2026-07-07", "shop_name": "麥當勞(逸東)McDonalds", "phone": "852-31417367", "address": "香港大嶼山東涌逸東邨逸東商場1樓104號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "452355", "submit_date": "2026-07-06", "shop_name": "7Eleven（九龍塘又一樓）1820", "phone": "852-23752296", "address": "九龍九龍塘花圃街11-11C號, 達之路26,26A,28&28A號 及雀橋街2-6號, 又一樓地下10號舖", "materials": {"大膠袋": 3, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*3"}, {"shop_id": "453571", "submit_date": "2026-07-06", "shop_name": "麥當勞（MontereyPlace）McDonalds", "phone": "852-24217677", "address": "新界西貢將軍澳唐俊街23號MONTEREY PLACE地下 G16號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "453966", "submit_date": "2026-07-02", "shop_name": "麥當勞(樂富II)McDonalds", "phone": "852-23385032", "address": "九龍聯合道198號 樂富廣場3樓3112, 3113及3114號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "454353", "submit_date": "2026-07-06", "shop_name": "龍順軒海鮮酒家（欣田）全部即叫即整朝早黎叫點心夜晚一家大細食小菜", "phone": "852-91620448", "address": "欣田邨欣田商場1樓101號舖", "materials": {"大膠袋": 10, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*10"}, {"shop_id": "454941", "submit_date": "2026-07-06", "shop_name": "麥當勞（興華）McDonalds", "phone": "852-29581556", "address": "九龍深水埗元州街416號地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "455146", "submit_date": "2026-07-06", "shop_name": "越蘆越南牛肉粉(上環)招牌越南粉", "phone": "852-27827999", "address": "上環皇后大道西2-12號聯發商業中心地下B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "455280", "submit_date": "2026-07-06", "shop_name": "麥當勞(尚德)McDonalds", "phone": "852-21780769", "address": "新界將軍澳尚德邨TKO Spot2樓216號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 7, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*7"}, {"shop_id": "455430", "submit_date": "2026-07-07", "shop_name": "麥當勞(士美菲路)McDonalds", "phone": "852-28174130", "address": "香港堅尼地城士美菲路12F-G文光閣地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "455431", "submit_date": "2026-07-07", "shop_name": "麥當勞(毓華)McDonalds", "phone": "852-27528426", "address": "九龍慈雲山毓華街68號萬年戲院大廈地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "455432", "submit_date": "2026-07-02", "shop_name": "麥當勞(利東)McDonalds", "phone": "852-28749654", "address": "香港鴨脷洲利東邨利東商場第二期212號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "455433", "submit_date": "2026-07-03", "shop_name": "麥當勞(置富花園)McDonalds", "phone": "852-28753720", "address": "香港簿扶林置富南區廣場四樓426-432號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "455517", "submit_date": "2026-07-03", "shop_name": "NoodFood(K11MUSEA)", "phone": "852-22985456", "address": "尖沙咀梳士巴利道18號 K11 MUSEA 6樓611", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "455592", "submit_date": "2026-07-02", "shop_name": "KokoroTokyoMazesoba（荃灣）東京名店連續多年外賣冠軍", "phone": "852-63828446", "address": "荃灣大河道100號海之戀商場1樓1005號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "457230", "submit_date": "2026-07-07", "shop_name": "麥當勞(荷李活廣場)McDonalds", "phone": "852-29555187", "address": "九龍鑽石山荷李活廣場二樓216號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "458248", "submit_date": "2026-07-07", "shop_name": "麥當勞（美居中心）McDonalds", "phone": "852-27283566", "address": "元州街213號美居中心地下9-19號及23-26號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "458440", "submit_date": "2026-07-06", "shop_name": "韓脈HanmatKoreanBBQRestaurant", "phone": "852-25116316", "address": "麼地道68號帝國中心地下高層UG43號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "458600", "submit_date": "2026-07-02", "shop_name": "麥當勞(天平)McDonalds", "phone": "852-26392254", "address": "新界上水天平邨天平商場地下122號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "458731", "submit_date": "2026-07-02", "shop_name": "麥當勞(海聯廣場)McDonalds", "phone": "852-26763860", "address": "新界粉嶺聯和墟和睦路9號海聯廣場地下2A及2B", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "458732", "submit_date": "2026-07-07", "shop_name": "麥當勞(沙田萬怡酒店)McDonalds", "phone": "852-26798129", "address": "新界沙田安平街1號地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "458764", "submit_date": "2026-07-06", "shop_name": "citysuperDeli(沙田)", "phone": "852-22773216", "address": "沙田新城市廣場一期2樓204-214號鋪", "materials": {"大膠袋": 1, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*1"}, {"shop_id": "458879", "submit_date": "2026-07-03", "shop_name": "麥當勞(景光)McDonalds", "phone": "852-28920197", "address": "香港跑馬地景光街19-21號珍慶閣地下A舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "458880", "submit_date": "2026-07-06", "shop_name": "麥當勞(TheSouthside)McDonalds", "phone": "852-23801378", "address": "香港黃竹坑香葉道11號 THE SOUTHSIDE 地下 G01 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "459736", "submit_date": "2026-07-07", "shop_name": "森川弁当精緻日式便當良心小店", "phone": "852-23335852", "address": "夏慤道18號海富中心2樓90號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "460960", "submit_date": "2026-07-06", "shop_name": "SOUTHLANE(ShekTongTsui)", "phone": "852-57448390", "address": "石塘咀南里14號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "461721", "submit_date": "2026-07-02", "shop_name": "快樂蜂(聯安新樓)Jollibee(LuenOnApartment)", "phone": "852-26771130", "address": "西環士美菲路51號聯安新樓地下A-B號舖", "materials": {"大膠袋": 6, "小膠袋": 4, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*6, 小膠袋*4"}, {"shop_id": "461844", "submit_date": "2026-07-02", "shop_name": "ThePantryChipsRepublic", "phone": "852-29555662", "address": "太子道西193號MOKO新世紀廣場4樓436-438號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "461954", "submit_date": "2026-07-07", "shop_name": "麥當勞(皇后大道西)McDonalds", "phone": "852-28583417", "address": "香港皇后大道西265號地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "462066", "submit_date": "2026-07-03", "shop_name": "麥當勞(太和)McDonalds", "phone": "852-26509136", "address": "新界大埔太和邨太和商場102號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "462067", "submit_date": "2026-07-03", "shop_name": "麥當勞(油麗)McDonalds", "phone": "852-24898777", "address": "九龍油塘茶果嶺道油麗邨油麗商場地下5及6號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "462068", "submit_date": "2026-07-02", "shop_name": "麥當勞(皇后山)McDonalds", "phone": "852-26872223", "address": "新界粉嶺皇后山邨皇后山商場地下11號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "462094", "submit_date": "2026-07-06", "shop_name": "麥當勞(街市街)McDonalds", "phone": "852-24122134", "address": "新界荃灣荃灣市地段81川龍街22號地下及1樓及街市街10-16號地下及閣樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "462095", "submit_date": "2026-07-06", "shop_name": "麥當勞(長發)McDonalds", "phone": "852-24338156", "address": "新界青衣長發商場407A and 407B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "462212", "submit_date": "2026-07-06", "shop_name": "麥當勞(太安樓)McDonalds", "phone": "852-29679830", "address": "香港筲箕灣筲箕灣道57-87號及太安街15號太安樓地下G32-G34號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "462214", "submit_date": "2026-07-06", "shop_name": "手作功夫茶（西菁街順泰大廈店）", "phone": "852-55075220", "address": "西菁街10號好順泰大廈地下2B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "463442", "submit_date": "2026-07-03", "shop_name": "麥當勞（美林）McDonalds", "phone": "852-26975951", "address": "大圍美田路30號美林商場1樓96號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "463458", "submit_date": "2026-07-03", "shop_name": "SeoulNoodles", "phone": "852-93601546", "address": "Ground floor,No.23 Granville Road,Tsim Sha Tsui,HK", "materials": {"大膠袋": 4, "小膠袋": 4, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*4, 小膠袋*4"}, {"shop_id": "464838", "submit_date": "2026-07-06", "shop_name": "快樂蜂(家壹)Jollibee(TheAddition)", "phone": "852-26778332", "address": "長沙灣元州街342-356號家壹1樓12號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "465094", "submit_date": "2026-07-06", "shop_name": "遇見您Encounter(前酒店大廚主理性價比之選)", "phone": "852-28892238", "address": "漆咸道北423-433號怡輝大廈地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 10, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*10"}, {"shop_id": "465331", "submit_date": "2026-07-06", "shop_name": "即叫即整首單全單8折GhettoBurger(SmashBurger)手工漢堡包專門店", "phone": "852-92578376", "address": "黑布街13號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "465350", "submit_date": "2026-07-07", "shop_name": "麥當勞(小西灣)McDonalds", "phone": "852-25150314", "address": "香港柴灣小西灣富怡花園地下C10-C19", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "465351", "submit_date": "2026-07-06", "shop_name": "麥當勞(馬頭圍)McDonalds", "phone": "852-22468290", "address": "九龍土瓜灣馬頭圍道207-211號海悅廣場地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "465352", "submit_date": "2026-07-02", "shop_name": "麥當勞(廣源)McDonalds", "phone": "852-26357283", "address": "新界沙田廣源邨廣源商場第三座第二層十三號商舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "465488", "submit_date": "2026-07-06", "shop_name": "麥當勞(美孚)McDonalds", "phone": "852-27862178", "address": "九龍美孚新邨萬事達廣場地下N60A號店", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "465489", "submit_date": "2026-07-06", "shop_name": "麥當勞(般咸道)McDonalds", "phone": "852-25461671", "address": "香港般咸道51-53號好景洋樓地下A-C及低層地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "467136", "submit_date": "2026-07-06", "shop_name": "麥當勞(興華邨II)McDonalds", "phone": "852-29769865", "address": "香港柴灣環翠道11號興華(一)邨興華廣場1樓109A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "467391", "submit_date": "2026-07-06", "shop_name": "段純貞牛肉麵(THESOUTHSIDE)", "phone": "852-21170637", "address": "黃竹坑香葉道11號THE SOUTHSIDE 2樓205號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "467436", "submit_date": "2026-07-07", "shop_name": "幸福巷子(啟德體育園）", "phone": "852-23602098", "address": "九龍九龍城啟德啟德體育園啟德零售館1，2樓M1-LA203-LA206及M1-211-214號舖5號檔", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "468288", "submit_date": "2026-07-02", "shop_name": "麥當勞(鳳德)McDonalds", "phone": "852-23527761", "address": "九龍鑽石山鳳德邨鳳德商場202A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "468415", "submit_date": "2026-07-03", "shop_name": "炑八韓烤(青衣城)", "phone": "852-28950370", "address": "青衣青敬路31-33號青衣城1 1樓119B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2, 紙袋*2"}, {"shop_id": "468475", "submit_date": "2026-07-02", "shop_name": "麥當勞(錦泰)McDonalds", "phone": "852-31248656", "address": "新界馬鞍山錦泰商場一樓102號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "468595", "submit_date": "2026-07-07", "shop_name": "麥當勞(秀茂坪)McDonalds", "phone": "852-23548506", "address": "觀塘秀茂坪秀明道101號秀茂坪商場地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "468596", "submit_date": "2026-07-07", "shop_name": "麥當勞(淘大II)McDonalds", "phone": "852-27986967", "address": "九龍牛頭角道77號淘大花園商場第二期地下G246-253號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "468652", "submit_date": "2026-07-03", "shop_name": "MIRRORBURGER（天后）", "phone": "852-96252052", "address": "Shop I, G/F , PO WING BUILDING, 1A MERLIN STREET, TIN HAU, HONG KONG", "materials": {"大膠袋": 0, "小膠袋": 10, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*10"}, {"shop_id": "468687", "submit_date": "2026-07-06", "shop_name": "NaraThaiCuisine新城市廣場", "phone": "852-31881138", "address": "沙田正街18號新城市廣場一期5樓507號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "469776", "submit_date": "2026-07-02", "shop_name": "SeoulNoodles中環分店(士丹利街)首爾製麵所", "phone": "852-51989798", "address": "士丹利街38號金禾大廈1樓", "materials": {"大膠袋": 11, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*11, 4號無紡布袋*1"}, {"shop_id": "471376", "submit_date": "2026-07-06", "shop_name": "麥當勞（紅磡灣中心）McDonalds", "phone": "852-23622034", "address": "紅磡灣街2-8號紅磡灣中心地下8號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "471460", "submit_date": "2026-07-07", "shop_name": "田浦食肉(灣仔店)", "phone": "852-61031592", "address": "灣仔莊士敦道28-34號莊士頓大樓地下E號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "471760", "submit_date": "2026-07-06", "shop_name": "麥當勞(鯉魚門廣場)McDonalds", "phone": "852-31940307", "address": "九龍油塘鯉魚門廣場二樓201號舖位", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "471761", "submit_date": "2026-07-02", "shop_name": "麥當勞(天秀路)McDonalds", "phone": "852-27599439", "address": "天水圍天秀路8號天一商城1樓1018-1019號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "471764", "submit_date": "2026-07-03", "shop_name": "FlatIronSteak(SoHo)", "phone": "852-98421883", "address": "G/F, Al Aqmar House, 30 Hollywood Rd, Central, Hong Kong", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "471798", "submit_date": "2026-07-02", "shop_name": "捌加廿陸天婦羅居酒屋天婦羅丼飯專門店（油麻地店）", "phone": "852-90835149", "address": "窩打老道31-39號翠園大廈一期地下33A號舖", "materials": {"大膠袋": 10, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*10"}, {"shop_id": "471844", "submit_date": "2026-07-02", "shop_name": "麥當勞(Airside)McDonalds", "phone": "852-27453698", "address": "香港九龍啟德協調道2號AIRSIDE 地庫B1層B117號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "471908", "submit_date": "2026-07-06", "shop_name": "麥當勞(元朗貿易中心)McDonalds", "phone": "852-24748088", "address": "新界元朗青山道99-109號元朗貿易中心地下五號舖及一樓二樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "472046", "submit_date": "2026-07-03", "shop_name": "麥當勞(德田)McDonalds", "phone": "852-27178546", "address": "九龍藍田德田商場一樓104A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "472047", "submit_date": "2026-07-06", "shop_name": "麥當勞(山景)McDonalds", "phone": "852-24641660", "address": "新界屯門山景邨山景商場124號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "472048", "submit_date": "2026-07-02", "shop_name": "麥當勞(又一城III)McDonalds", "phone": "852-22658232", "address": "九龍九龍塘達之路80號又一城LG1樓LG1-01A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "472081", "submit_date": "2026-07-03", "shop_name": "PretAManger(港鐵旺角東站)", "phone": "852-21649711", "address": "九龍港鐵旺角東站MKK6舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "472859", "submit_date": "2026-07-06", "shop_name": "SeoulNoodles超濃牛骨湯韓式刀削麵", "phone": "852-44216343", "address": "謝斐道482號兆安廣場地下4-6號舖", "materials": {"大膠袋": 0, "小膠袋": 6, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*6"}, {"shop_id": "474092", "submit_date": "2026-07-06", "shop_name": "TheMatchaTokyo(中環)", "phone": "852-39621107", "address": "中環皇后大道中80號H Queen's高層地下3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 2, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙漿杯托-4托*2"}, {"shop_id": "474707", "submit_date": "2026-07-02", "shop_name": "麥當勞（愛民）McDonalds", "phone": "852-27577891", "address": "九龍何文田忠孝街60號愛民邨愛民廣場G38A號地下及G38B號A部份地庫", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "474936", "submit_date": "2026-07-03", "shop_name": "麥當勞(怡和街)McDonalds", "phone": "852-25778240", "address": "香港銅鑼灣怡和街46-54號地下(部分), 1樓及2樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "475055", "submit_date": "2026-07-02", "shop_name": "麥當勞(德昌大廈)McDonalds", "phone": "852-27854939", "address": "新界葵涌葵涌道1001號德昌大廈一樓3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "475056", "submit_date": "2026-07-02", "shop_name": "麥當勞(荃灣廣場II)McDonalds", "phone": "852-24115973", "address": "新界荃灣大壩街4-30號荃灣廣場第五層511-512及511-512A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "475088", "submit_date": "2026-07-03", "shop_name": "麥當勞(大圍)McDonalds", "phone": "852-26089197", "address": "新界大圍大圍道37-47號耀寶大廈地下1號鋪及1樓全層", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "475182", "submit_date": "2026-07-06", "shop_name": "麥當勞(余道生)McDonalds", "phone": "852-25263770", "address": "香港皇后大道中37號余道生大廈地庫", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "475183", "submit_date": "2026-07-06", "shop_name": "麥當勞(花都廣場)McDonalds", "phone": "852-26826084", "address": "新界粉嶺百和路88號花都廣場地下91A, 93-95號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "475184", "submit_date": "2026-07-02", "shop_name": "麥當勞(新達廣場II)McDonalds", "phone": "852-26529900", "address": "新界大埔南運路9號新達廣場1樓083-085號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "475213", "submit_date": "2026-07-06", "shop_name": "citysuperDeli(中環)", "phone": "852-22773215", "address": "Shop 1041-1049, 1/F, International Finance Centre Mall, 1 Harbour View Street, Central", "materials": {"大膠袋": 1, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*1"}, {"shop_id": "475272", "submit_date": "2026-07-02", "shop_name": "麥當勞(秦石)McDonalds", "phone": "852-25275195", "address": "新界沙田盛田街1號秦石邨秦石商場地下8+9號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "475343", "submit_date": "2026-07-02", "shop_name": "麥當勞(康澤花園)McDonalds", "phone": "852-25783870", "address": "香港北角英皇道238號康澤花園地下 B2及 B3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "477024", "submit_date": "2026-07-02", "shop_name": "麥當勞(海趣坊)McDonalds", "phone": "852-28972108", "address": "香港新界屯門湖翠路168-236號海趣坊一樓55-60號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "478121", "submit_date": "2026-07-02", "shop_name": "麥當勞(麗晶商場)McDonalds", "phone": "852-27590623", "address": "宏光道80號麗晶商場2樓218-1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "478243", "submit_date": "2026-07-02", "shop_name": "麥當勞(健康邨)McDonalds", "phone": "852-25639482", "address": "香港北角七姊妹道194號健康邨地下C舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "478372", "submit_date": "2026-07-06", "shop_name": "麥當勞(華樂)McDonalds", "phone": "852-24591736", "address": "新界屯門屯門市地段152號,青山坊2號華樂大廈地下16, 17, 21A(部份)及21B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "478373", "submit_date": "2026-07-02", "shop_name": "麥當勞(駿景廣場)McDonalds", "phone": "852-26348734", "address": "新界沙田火炭駿景路1號駿景廣場地下G83A, G84-G85號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "478401", "submit_date": "2026-07-07", "shop_name": "豪大大雞排好好茶（粉嶺）", "phone": "852-67621155", "address": "新運路38號祥華商場3樓313號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "478523", "submit_date": "2026-07-02", "shop_name": "麥當勞(新豐)McDonalds", "phone": "852-26703509", "address": "新界上水石湖墟新豐路106-110號金城大廈地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 9, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*9"}, {"shop_id": "478525", "submit_date": "2026-07-02", "shop_name": "麥當勞(牛頭角道)McDonalds", "phone": "852-23442756", "address": "九龍觀塘牛頭角道327-333號瓊林大廈地庫及地下部份", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "479664", "submit_date": "2026-07-06", "shop_name": "7Eleven（北角康澤花園）1853", "phone": "852-25190318", "address": "香港北角英皇道238號康澤花園部份地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "479668", "submit_date": "2026-07-06", "shop_name": "7Eleven（東堤灣畔）0565", "phone": "852-24036842", "address": "香港東涌東堤灣畔第六座地下13號舖位。", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "481260", "submit_date": "2026-07-06", "shop_name": "TheMatchaTokyo(K11)", "phone": "852-39621107", "address": "尖沙咀K11 Art Mall地庫2樓B201號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 1, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "雙杯無紡布袋*1"}, {"shop_id": "481390", "submit_date": "2026-07-02", "shop_name": "Eaaathere", "phone": "852-24486738", "address": "嘉善街18號利奧坊地下G704號舖", "materials": {"大膠袋": 0, "小膠袋": 2, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*2"}, {"shop_id": "481762", "submit_date": "2026-07-06", "shop_name": "麥當勞(天耀II)McDonalds", "phone": "852-24460375", "address": "新界元朗天水圍天湖路天耀邨天耀商場地下L011號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "481791", "submit_date": "2026-07-06", "shop_name": "citysuperDeli(銅鑼灣)", "phone": "852-22773214", "address": "銅鑼灣時代廣場底牢1層", "materials": {"大膠袋": 2, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2"}, {"shop_id": "482751", "submit_date": "2026-07-02", "shop_name": "PokeHeartBuildyourownBowl超人氣波奇碗", "phone": "852-59268562", "address": "中環結志街45號新中環大廈地下G鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "483032", "submit_date": "2026-07-06", "shop_name": "GreyhoundCafe(又一城)", "phone": "852-23834838", "address": "九龍塘達之路80號又一城L2樓L2-42號舖", "materials": {"大膠袋": 0, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*3"}, {"shop_id": "484537", "submit_date": "2026-07-02", "shop_name": "麥當勞（窩仔街）McDonalds", "phone": "852-27840215", "address": "窩仔街1-13號仁寶大廈地下B2-B3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "484577", "submit_date": "2026-07-06", "shop_name": "麥當勞(駿發花園)McDonalds", "phone": "852-27809361", "address": "九龍油麻地眾坊街3號駿發花園戲院樓地下G2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "484653", "submit_date": "2026-07-06", "shop_name": "麥當勞(駿業街)McDonalds", "phone": "852-37096983", "address": "九龍觀塘駿業街56號中海日昇中心1樓K號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "484763", "submit_date": "2026-07-02", "shop_name": "LeeLaksa(上環)招牌叻沙", "phone": "852-22658999", "address": "上環皇后大道中302號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 2, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*2, 4號無紡布袋*1"}, {"shop_id": "484913", "submit_date": "2026-07-03", "shop_name": "麥當勞(景峰花園)McDonalds", "phone": "852-24412180", "address": "新界屯門景峰徑2號景峰花園地下G23, G25-G27號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "485057", "submit_date": "2026-07-06", "shop_name": "麥當勞(南康)McDonalds", "phone": "852-28849853", "address": "香港筲箕灣南康街18號康華大廈地下低層4號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "485058", "submit_date": "2026-07-02", "shop_name": "麥當勞(彩雲II)McDonalds", "phone": "852-27775288", "address": "九龍牛池灣清水灣道45號彩雲邨彩雲商場第二期地下上層A104及A115號店", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "485142", "submit_date": "2026-07-03", "shop_name": "Suage北海道湯咖哩", "phone": "852-26222388", "address": "亞皆老街8號朗豪坊4A樓1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "485145", "submit_date": "2026-07-02", "shop_name": "PretAManger(Cityplaza太古城)", "phone": "852-28575301", "address": "太古太古城道18號太古城中心5樓503號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "485244", "submit_date": "2026-07-06", "shop_name": "麥當勞(NovoWalk)McDonalds", "phone": "852-26378011", "address": "新界屯門欣寶路8號NOVO LAND,NOVO WALK地下39號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "487246", "submit_date": "2026-07-06", "shop_name": "TheMatchaTokyo(APM)", "phone": "852-27126118", "address": "觀塘觀塘道418號創紀之城五期(apm)1樓L1-9B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 1, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "雙杯無紡布袋*1"}, {"shop_id": "487838", "submit_date": "2026-07-02", "shop_name": "快樂蜂(亞皆老街)Jollibee(ArgyleStreet)", "phone": "852-26023522", "address": "旺角亞皆老街16號旺角商業大廈1樓", "materials": {"大膠袋": 2, "小膠袋": 2, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2, 小膠袋*2, 紙袋*1"}, {"shop_id": "488205", "submit_date": "2026-07-02", "shop_name": "麥當勞(博康)McDonalds", "phone": "852-21445203", "address": "新界沙田博康邨博康商場2樓210號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "488206", "submit_date": "2026-07-03", "shop_name": "麥當勞(廣福)McDonalds", "phone": "852-26535348", "address": "新界大埔廣福邨廣福邨商業中心第P316號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "488207", "submit_date": "2026-07-07", "shop_name": "麥當勞(翠怡)McDonalds", "phone": "852-24358772", "address": "新界青衣楓樹窩路翠怡花園商場地下G2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "488208", "submit_date": "2026-07-06", "shop_name": "麥當勞(映灣園)McDonalds", "phone": "852-28667995", "address": "香港大嶼山東涌健東路1號映灣園映灣薈平台1樓29及30號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "488372", "submit_date": "2026-07-02", "shop_name": "麥當勞(裕民坊)McDonalds", "phone": "852-24404113", "address": "九龍觀塘協和街33號裕民坊商場1樓176舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "488415", "submit_date": "2026-07-06", "shop_name": "NoodFoodCafe(永豐街)", "phone": "852-22985310", "address": "灣仔永豐街3-11號樂滿大廈1樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "488425", "submit_date": "2026-07-02", "shop_name": "麥當勞(大埔昌運)McDonalds", "phone": "852-26656612", "address": "新界大埔安慈路4號昌運中心57-66號地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "489523", "submit_date": "2026-07-03", "shop_name": "simplylife(中環)", "phone": "852-25379190", "address": "中環花園道3號冠君大廈LG樓6號舖", "materials": {"大膠袋": 0, "小膠袋": 6, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*6, 紙袋*5"}, {"shop_id": "489738", "submit_date": "2026-07-07", "shop_name": "田浦食肉(北角)", "phone": "852-57311270", "address": "北角和富道6C號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "491125", "submit_date": "2026-07-06", "shop_name": "麺屋KokoroTokyoMazesoba（沙田）東京名店連續多年外賣冠軍", "phone": "852-63828446", "address": "沙田正街18號新城市廣場一期7樓704號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "491487", "submit_date": "2026-07-02", "shop_name": "麥當勞(元朗南)McDonalds", "phone": "852-24430738", "address": "新界元朗教育路9-13號興發大廈地下1&11舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "491488", "submit_date": "2026-07-03", "shop_name": "麥當勞(天瑞)McDonalds", "phone": "852-24458365", "address": "新界元朗天水圍天瑞邨(I&II)天瑞商場地下G1B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "491490", "submit_date": "2026-07-06", "shop_name": "麥當勞(綠楊坊)McDonalds", "phone": "852-24022527", "address": "新界荃灣綠楊坊二樓S1-2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "491491", "submit_date": "2026-07-02", "shop_name": "麥當勞(海悅豪園)McDonalds", "phone": "852-22744106", "address": "新界將軍澳培成路十八號海悅豪園地下九號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "491516", "submit_date": "2026-07-02", "shop_name": "麥當勞(竹園)McDonalds", "phone": "852-23279998", "address": "九龍竹園南邨竹園商場S219A號舖平台部分", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "491527", "submit_date": "2026-07-06", "shop_name": "芝加哥串燒酒場宵夜首選(太和中心)", "phone": "852-57233338", "address": "太和大埔太和路15號太和中心地下37號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "491642", "submit_date": "2026-07-02", "shop_name": "麥當勞(頌安)McDonalds", "phone": "852-26334380", "address": "新界馬鞍山頌安邨頌安商場6號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "491656", "submit_date": "2026-07-06", "shop_name": "日嚐慢煮生活(高質日本料理)", "phone": "852-66761236", "address": "明安街10號寶石戲院地下F號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 1, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "雙杯無紡布袋*1"}, {"shop_id": "491668", "submit_date": "2026-07-06", "shop_name": "麥當勞(彌敦行)McDonalds", "phone": "852-23851611", "address": "九龍油麻地彌敦道518-520號彌敦行地下A及C舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "491674", "submit_date": "2026-07-03", "shop_name": "麥當勞(長康)McDonalds", "phone": "852-21466914", "address": "新界青衣長康邨長康商場一期地下101號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "491795", "submit_date": "2026-07-06", "shop_name": "麥當勞(沙田商業中心)McDonalds", "phone": "852-21454123", "address": "新界沙田火炭山尾街18-24號沙田商業中心地下1及2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "494395", "submit_date": "2026-07-02", "shop_name": "麥當勞(海達邨)McDonalds", "phone": "852-25595727", "address": "深旺道38號海達邨三期平台1樓3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "494396", "submit_date": "2026-07-06", "shop_name": "麥當勞(鴨寮街)McDonalds", "phone": "852-23864460", "address": "九龍深水埗北河街104號及鴨寮街178號新北河大廈閣樓A,B,C,D,E及F單位", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "494425", "submit_date": "2026-07-06", "shop_name": "麥當勞(恆盛II)McDonalds", "phone": "852-27804073", "address": "九龍油麻地彌敦道363-373號恒成大廈地下B舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "494704", "submit_date": "2026-07-02", "shop_name": "快樂蜂(荃灣88)Jollibee(Plaza88)", "phone": "852-26771411", "address": "荃灣楊屋道88號荃灣88 1樓17A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1, 紙袋*1"}, {"shop_id": "495013", "submit_date": "2026-07-02", "shop_name": "銀杏館婆婆廚房健康有機", "phone": "852-26631998", "address": "高超道38號大本型空中花園R01號舖", "materials": {"大膠袋": 3, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*3, 小膠袋*3, 4號無紡布袋*1"}, {"shop_id": "495025", "submit_date": "2026-07-03", "shop_name": "NoodFood(中國工商銀行大廈)", "phone": "852-36913983", "address": "中環花園道3號花旗銀行廣場中國工商銀行大廈3樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "495029", "submit_date": "2026-07-03", "shop_name": "PretAManger(Infinitus無限極廣場)", "phone": "852-24652055", "address": "香港中環德輔道中199號無限極廣場1樓109-110號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "495107", "submit_date": "2026-07-06", "shop_name": "7Eleven（元朗朗壹廣場）1839", "phone": "852-26826581", "address": "香港新界 康業街 8 號 朗壹廣場 地下 G08-G09 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "496196", "submit_date": "2026-07-02", "shop_name": "元氣壽司(黃埔花園)GenkiSushi", "phone": "852-23302884", "address": "紅磡德康街6號黃埔花園第十一期地下G36舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1, 4號無紡布袋*1"}, {"shop_id": "496235", "submit_date": "2026-07-07", "shop_name": "Greenhouse(時代廣場)", "phone": "852-23834022", "address": "銅鑼灣勿地臣街1號時代廣場食通天10樓1004號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "560078", "submit_date": "2026-07-02", "shop_name": "麥當勞(新港城II)McDonalds", "phone": "852-26334460", "address": "新界沙田鞍祿街18號新港城中心二樓2138號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "560146", "submit_date": "2026-07-03", "shop_name": "GALBIGUNG", "phone": "852-26081198", "address": "大圍車公廟路18號圍方3樓331號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "560153", "submit_date": "2026-07-06", "shop_name": "麥當勞(亞皆老街)McDonalds", "phone": "852-23962415", "address": "九龍旺角亞皆老街105號地下及閣樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "561774", "submit_date": "2026-07-06", "shop_name": "麥當勞(萬廸廣場)McDonalds", "phone": "852-22670798", "address": "九龍新蒲崗大有街3號萬廸廣場地下F及 G舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "566661", "submit_date": "2026-07-02", "shop_name": "麥當勞(軒尼詩)McDonalds", "phone": "852-28939503", "address": "香港灣仔軒尼詩道302-308號集成中心地下G11-17號舖舆地下高層(部分)", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "566697", "submit_date": "2026-07-07", "shop_name": "麥當勞(好運中心)McDonalds", "phone": "852-35650480", "address": "新界沙田橫壆街1-15號好運中心3樓3014-3015號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "566730", "submit_date": "2026-07-02", "shop_name": "翠湖海鮮酒家(元朗)", "phone": "852-24883312", "address": "西菁街10號好順泰大廈1樓2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "566732", "submit_date": "2026-07-06", "shop_name": "麥當勞(坪石)McDonalds", "phone": "852-22527938", "address": "九龍牛池灣坪石村停車場 G1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "566736", "submit_date": "2026-07-07", "shop_name": "麥當勞(彩園)McDonalds", "phone": "852-26723936", "address": "新界上水彩園商場三樓R36及R37號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "567722", "submit_date": "2026-07-06", "shop_name": "雲貴軒米線專門店(葵芳廣場)", "phone": "852-24423388", "address": "葵芳興芳路177號葵芳廣場1樓111及111A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "570009", "submit_date": "2026-07-06", "shop_name": "麥當勞(榮芳)McDonalds", "phone": "852-29449196", "address": "新界葵涌榮芳路1-5號地下舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "570010", "submit_date": "2026-07-06", "shop_name": "麥當勞(晴朗)McDonalds", "phone": "852-23820518", "address": "九龍九龍城沐翠街晴朗商場地下B001號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "570011", "submit_date": "2026-07-07", "shop_name": "麥當勞(科學園)McDonalds", "phone": "852-37098358", "address": "新界沙田白石角香港科學園第二期8W大樓地下S037-S039號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "571619", "submit_date": "2026-07-02", "shop_name": "麥當勞(樂華)McDonalds", "phone": "852-23051384", "address": "九龍牛頭角樂華(北)邨樂華商場310號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "573224", "submit_date": "2026-07-06", "shop_name": "麥當勞(置富嘉湖II)McDonalds", "phone": "852-26174329", "address": "新界天水圍天恩路12-18號嘉湖(一期)地下G57B &G57C號舖及外座區G57A", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "573242", "submit_date": "2026-07-02", "shop_name": "Caligari日本過江龍得獎咖喱", "phone": "852-60586216", "address": "Shop F, 2/F, Entertainment Building, 30 Queen's Road Central, Central, 香港", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "575001", "submit_date": "2026-07-03", "shop_name": "翠園(葵青劇院)", "phone": "852-26186887", "address": "葵芳興寧路12號葵青劇院地下1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "576494", "submit_date": "2026-07-03", "shop_name": "MonsieurCHATT(上環)全新推出性價比極高一人健康餐", "phone": "852-31058077", "address": "蘇杭街91號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "576504", "submit_date": "2026-07-03", "shop_name": "PretAManger(FestivalWalk又一城)", "phone": "852-39745795", "address": "九龍九龍塘達之路80號又一城 G層(半層) KIOSK-S1及S2", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "576506", "submit_date": "2026-07-02", "shop_name": "紫宸臺灣美食", "phone": "852-51192699", "address": "榮芳路9號恒景商場地下G12號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "576559", "submit_date": "2026-07-03", "shop_name": "柞木炭家(旺角）", "phone": "852-52999023", "address": "旺角彌敦道700號T.O.P This is Our Place 5樓501號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "576564", "submit_date": "2026-07-02", "shop_name": "麥當勞(越秀)McDonalds", "phone": "852-23201578", "address": "九龍新蒲崗寧遠街3-23號越秀廣場地下G02-G05舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "576565", "submit_date": "2026-07-06", "shop_name": "麥當勞(衛城道)McDonalds", "phone": "852-29152623", "address": "香港半山衛城道3號至3號A地下下層", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "576566", "submit_date": "2026-07-03", "shop_name": "麥當勞(俊宏軒)McDonalds", "phone": "852-28115481", "address": "新界元朗天瑞路88號俊宏軒地下G5-G7號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 15, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*15"}, {"shop_id": "577559", "submit_date": "2026-07-07", "shop_name": "CHASKA半山堅道印度美食", "phone": "852-60734268", "address": "堅道58-62號美蘭閣地下2號舖", "materials": {"大膠袋": 0, "小膠袋": 2, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*2, 紙袋*1"}, {"shop_id": "578205", "submit_date": "2026-07-06", "shop_name": "麥當勞(寶怡花園)McDonalds", "phone": "852-24645711", "address": "新界屯門良德街11號寶怡花園商場地下1-2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "578206", "submit_date": "2026-07-06", "shop_name": "麥當勞(愛東)McDonalds", "phone": "852-25604242", "address": "香港筲箕灣愛東邨愛東商場地下11號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "579787", "submit_date": "2026-07-03", "shop_name": "NoodFood(太古坊)", "phone": "852-36913965", "address": "鰂魚涌英皇道979號太古坊電訊盈科中心5樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "580691", "submit_date": "2026-07-03", "shop_name": "TruefitDeli有菜又有肉健康由我做", "phone": "852-92116794", "address": "夏慤道12號美國銀行中心地下G10號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 2, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2, 紙漿杯2托*2"}, {"shop_id": "581941", "submit_date": "2026-07-02", "shop_name": "小寶車仔麵", "phone": "852-67032252", "address": "新界西貢將軍澳毓雅里7號富麗花園地下6號舖", "materials": {"大膠袋": 3, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*3, 小膠袋*3"}, {"shop_id": "583155", "submit_date": "2026-07-06", "shop_name": "麥當勞(彩明)McDonalds", "phone": "852-34095352", "address": "新界將軍澳彩明苑彩明商場271 及272 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "584928", "submit_date": "2026-07-03", "shop_name": "AlDente意式情迷士丹頓街", "phone": "852-28695463", "address": "中環蘇豪士丹頓街16號地舖", "materials": {"大膠袋": 8, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*8"}, {"shop_id": "586368", "submit_date": "2026-07-07", "shop_name": "PretAManger(Citygate東薈城)", "phone": "852-22953335", "address": "大嶼山東涌達東道20號東薈城 G18號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "589645", "submit_date": "2026-07-03", "shop_name": "十勝牛和食料理(濕地公園)", "phone": "852-24139288", "address": "天水圍濕地公園路1號Wetland Seasons Bay地下8A號舖", "materials": {"大膠袋": 20, "小膠袋": 18, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*20, 小膠袋*18"}, {"shop_id": "589649", "submit_date": "2026-07-06", "shop_name": "NoodFoodCafe(荷李活道)", "phone": "852-36913271", "address": "中環蘇豪荷李活道32號建業榮基中心2樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "589658", "submit_date": "2026-07-06", "shop_name": "麥當勞(CausewayBayIII)McDonalds", "phone": "852-28913503", "address": "香港銅鑼灣波斯富街24-30號寶漢大廈地下C2 & C3號舖部分及地庫全層", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "590530", "submit_date": "2026-07-07", "shop_name": "麥當勞(黃金海岸)McDonalds", "phone": "852-24416822", "address": "屯門青山公路 - 掃管笏段1號黃金海岸商場地下R6、F9號舖及露天茶座", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "594115", "submit_date": "2026-07-03", "shop_name": "元氣壽司(恆福商業中心)GenkiSushi", "phone": "852-27360019", "address": "佐敦彌敦道221B-E號恆福商業中心地庫B2舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "594122", "submit_date": "2026-07-02", "shop_name": "茶皇殿點心燒味住家菜平台力推同區首選(晴朗)", "phone": "852-26269208", "address": "九龍城啟晴邨晴朗商場A區A102號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "596231", "submit_date": "2026-07-07", "shop_name": "麥當勞(形點)McDonalds", "phone": "852-25205377", "address": "元朗朗日路8號形點 II L3樓A312號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "596292", "submit_date": "2026-07-02", "shop_name": "麥當勞(皇后大道中)McDonalds", "phone": "852-25418667", "address": "香港上環皇后大道中287-299號QRC299地下2A&2B舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "597923", "submit_date": "2026-07-06", "shop_name": "麥當勞(青衣城II)McDonalds", "phone": "852-24364742", "address": "新界青衣青敬路31 號青衣城地下G36-37號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "598109", "submit_date": "2026-07-02", "shop_name": "7Eleven（灣仔海港中心）0084", "phone": "852-28270043", "address": "香港灣仔港灣道 25 號海港中心地下 G6 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "599518", "submit_date": "2026-07-07", "shop_name": "Apinara泰國米芝蓮推薦泰菜", "phone": "852-31070688", "address": "金鐘道88號太古廣場2樓205號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "599598", "submit_date": "2026-07-06", "shop_name": "GYOJASANG", "phone": "852-28809868", "address": "銅鑼灣加寧街1-3號Fashion Walk地下C號舖", "materials": {"大膠袋": 0, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*3"}, {"shop_id": "600404", "submit_date": "2026-07-03", "shop_name": "CheekyBuns(中環)", "phone": "852-25812128", "address": "香港中環閣麟街45-47號祥暉大廈5B地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "600655", "submit_date": "2026-07-06", "shop_name": "元氣壽司(屯門市廣場)GenkiSushi", "phone": "852-24597388", "address": "屯門屯門市廣場一期三樓 3206舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 2, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*2"}, {"shop_id": "600656", "submit_date": "2026-07-02", "shop_name": "元氣壽司(好爵中心)GenkiSushi", "phone": "852-24711366", "address": "葵涌葵義路2-10號好爵中心地下43號部份及44-48號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "602874", "submit_date": "2026-07-06", "shop_name": "SULJIB", "phone": "852-35802798", "address": "銅鑼灣勿地臣街1號時代廣場13樓1302號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "603700", "submit_date": "2026-07-02", "shop_name": "ThePastaShack(Wanchai)", "phone": "852-23252725", "address": "汕頭街4號廣泰樓地下B2A號舖", "materials": {"大膠袋": 3, "小膠袋": 6, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*3, 小膠袋*6"}, {"shop_id": "604045", "submit_date": "2026-07-06", "shop_name": "麥當勞(星凱堤岸)McDonalds", "phone": "852-24805633", "address": "新界沙田火炭坳背灣街1號星凱堤岸2樓201號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "606088", "submit_date": "2026-07-06", "shop_name": "麥當勞(莊士敦)McDonalds", "phone": "852-25914351", "address": "香港灣仔莊士敦道178-186號舖華懋莊士敦廣場地下2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "606154", "submit_date": "2026-07-02", "shop_name": "麥當勞(栢蕙苑)McDonalds", "phone": "852-28809603", "address": "香港鰂魚涌英皇道1060號柏蕙苑地下C舖舆前舖部分", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 10, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*10"}, {"shop_id": "607799", "submit_date": "2026-07-03", "shop_name": "麥當勞(石蔭)McDonalds", "phone": "852-22760880", "address": "新界葵涌石蔭邨石蔭商場LG二樓LG213及214號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "609417", "submit_date": "2026-07-06", "shop_name": "麥當勞(西貢)McDonalds", "phone": "852-27925585", "address": "新界西貢親民街西貢花園地下1-3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "609418", "submit_date": "2026-07-06", "shop_name": "麥當勞(兆康苑)McDonalds", "phone": "852-24649297", "address": "新界屯門兆康苑兆康商場109號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "611093", "submit_date": "2026-07-06", "shop_name": "麥當勞(黃大仙)McDonalds", "phone": "852-23221565", "address": "九龍黃大仙下邨黃大仙中心南館一樓123號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "614349", "submit_date": "2026-07-02", "shop_name": "翠園(PopCorn)", "phone": "852-21856118", "address": "將軍澳唐賢街9號PopCorn 1 2樓1-2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "668564", "submit_date": "2026-07-06", "shop_name": "貢茶（長沙灣店）", "phone": "852-62985891", "address": "九龍長沙灣青山道233號映築(商用部份)地下6號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "671879", "submit_date": "2026-07-07", "shop_name": "南海小館地道廣東風味巡禮堅持原汁原味呈現廣東菜之鮮", "phone": "852-92111155", "address": "香港仔黃竹坑道180號香港海洋公園萬豪酒店海殿地下B區地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "678445", "submit_date": "2026-07-06", "shop_name": "添好運（奧海城）", "phone": "852-23322896", "address": "九龍旺角海庭道18號奧海城2期地下G72A-C舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "685011", "submit_date": "2026-07-02", "shop_name": "IZAizakaya", "phone": "852-25221800", "address": "柯士甸道西1號ELEMENTS圓方Civic Square(頂層)R011號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "714605", "submit_date": "2026-07-03", "shop_name": "添好運（沙田新城市）", "phone": "852-23850955", "address": "新界沙田沙田正街18-19號新城市廣場一期4樓455號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721155", "submit_date": "2026-07-02", "shop_name": "WestwoodCarvery", "phone": "852-28698111", "address": "蘭桂坊和安里2號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "724456", "submit_date": "2026-07-06", "shop_name": "ThePizzaPig(將軍澳)", "phone": "852-26119791", "address": "澳南海岸唐俊街23號MONTEREY Place 地下G10-11號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "744191", "submit_date": "2026-07-06", "shop_name": "NBURGER（堅尼地城）", "phone": "852-60950218", "address": "西環堅尼地城爹核士街1號裕福大廈地下2號及3號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 2, "雙杯無紡布袋": 2, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "單杯無紡布袋*2, 雙杯無紡布袋*2"}, {"shop_id": "750746", "submit_date": "2026-07-02", "shop_name": "牛品x一品手作（銅鑼灣店）新出台灣料理招牌台灣甜品奶茶招牌便當送珍珠奶茶", "phone": "852-62329999", "address": "銅鑼灣登龍街1-29號金朝陽中心二期-MIDTOWN1樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "793439", "submit_date": "2026-07-02", "shop_name": "麥當勞(海富中心)McDonalds", "phone": "852-25201329", "address": "金鐘夏愨道18號海富中心地下1-41號舖（請輸入4位訂單號在外賣櫃取餐）", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721421318", "submit_date": "2026-07-02", "shop_name": "UG樂己(藍田)(台灣超人氣茶飲)", "phone": "852-23321080", "address": "香港 九龍 藍田 匯景道8號 滙景廣場4樓2A1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "721421375", "submit_date": "2026-07-06", "shop_name": "觸木Touchwood（精選西式料理必試推介）", "phone": "852-92625636", "address": "新界葵涌華星街8號華達工業中心B座12樓7室", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 2, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*2"}, {"shop_id": "721423325", "submit_date": "2026-07-06", "shop_name": "六六六六火鍋小紅書熱推火鍋店", "phone": "852-35636887", "address": "永興街21號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 1, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "單杯無紡布袋*1"}, {"shop_id": "721424347", "submit_date": "2026-07-02", "shop_name": "蛋仔記雞蛋仔", "phone": "852-46799809", "address": "豉油街33號地下", "materials": {"大膠袋": 2, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2"}, {"shop_id": "721426291", "submit_date": "2026-07-03", "shop_name": "営丼Eidon", "phone": "852-31881019", "address": "上水龍琛路39號上水廣場5樓502B號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721426298", "submit_date": "2026-07-02", "shop_name": "麥當勞(佐敦)McDonalds", "phone": "852-23325215", "address": "九龍佐敦道31-37號地庫及地下(部分)", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721428306", "submit_date": "2026-07-06", "shop_name": "ThaiSalad正宗風味泰菜", "phone": "852-54069216", "address": "柴灣道350號樂軒臺地下213號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721429366", "submit_date": "2026-07-03", "shop_name": "華御結(何文田廣場)", "phone": "852-62362017", "address": "九龍 何文田佛光街80號何文田廣場2樓220號舖", "materials": {"大膠袋": 0, "小膠袋": 2, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*2"}, {"shop_id": "721429406", "submit_date": "2026-07-03", "shop_name": "呂錦記手撕雞（葵芳店）", "phone": "852-67621138", "address": "新界葵芳盛芳街38-44號寬德大廈地下11號A舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "721431349", "submit_date": "2026-07-07", "shop_name": "Nonna(黃金海岸廣場)", "phone": "852-55656930", "address": "香港新界屯門黃金海岸青山公路黃金海岸廣場1號地下R2座G樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721433336", "submit_date": "2026-07-02", "shop_name": "麥當勞(美孚廣場)McDonalds", "phone": "852-21483022", "address": "九龍美孚新邨美孚廣場地下G03號舖及一樓119號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721436392", "submit_date": "2026-07-06", "shop_name": "台本FORMOSA", "phone": "852-93019790", "address": "ShopF,g/fKamSingMansion,151-161JaffeRoad,WanChai,Hongkong", "materials": {"大膠袋": 2, "小膠袋": 1, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2, 小膠袋*1, 紙袋*1"}, {"shop_id": "721439302", "submit_date": "2026-07-07", "shop_name": "達摩堂日式丼飯慢煮和牛", "phone": "852-98483260", "address": "彌敦道726號17樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721442321", "submit_date": "2026-07-03", "shop_name": "麥當勞(朗景臺)McDonalds", "phone": "852-27927555", "address": "新界元朗馬田路50號 朗景臺第二座 地下13-19號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721442334", "submit_date": "2026-07-07", "shop_name": "一碗賭上廚師生涯的炒飯(旺角店)", "phone": "852-59510515", "address": "旺角豉油街126號Fresh Lane2樓8號廚房", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 3, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*3"}, {"shop_id": "721442356", "submit_date": "2026-07-06", "shop_name": "麥當勞(清濤)McDonalds", "phone": "852-27559822", "address": "新界粉嶺清曉路1號清濤苑清濤商場一樓101號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721448338", "submit_date": "2026-07-03", "shop_name": "Vegology健康輕食餐x沙律碗高蛋白質低卡（粵海華美彎際酒店）", "phone": "852-62371164", "address": "香港灣仔駱克道57-73號香港華美粤海酒店地下A及B部份", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721483290", "submit_date": "2026-07-03", "shop_name": "YoYogurt(南昌)", "phone": "852-57021136", "address": "南昌V walk 2樓L2-13店", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "721486291", "submit_date": "2026-07-07", "shop_name": "Honbo(灣仔店)", "phone": "852-63429491", "address": "shop c, G/F, 1-3 Moon Street, 1-3 Moon St, Wan Chai, 香港", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "721490292", "submit_date": "2026-07-02", "shop_name": "CHAHOLIC茶可里（觀塘）阿拉比卡咖啡日本湯種貝果", "phone": "852-69990248", "address": "九龍觀塘巧明街98號三布目L8層811舖部分", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 4, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙漿杯2托*4"}, {"shop_id": "721497290", "submit_date": "2026-07-02", "shop_name": "KidsbayFresh新鮮輕食首選(柴灣店)", "phone": "852-91472910", "address": "柴灣利眾街40號富城工業大廈A座19樓A3室G室", "materials": {"大膠袋": 8, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*8"}, {"shop_id": "721505289", "submit_date": "2026-07-07", "shop_name": "麥當勞(匯都)McDonalds", "phone": "852-27691038", "address": "新界元朗洪水橋洪安里1號匯都地下A1-A3號鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721511289", "submit_date": "2026-07-07", "shop_name": "UP9（尼泊爾神菜）", "phone": "852-96039617", "address": "偉晴街82-88號偉業大廈地下7號鋪", "materials": {"大膠袋": 2, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2, 紙袋*1"}, {"shop_id": "721512368", "submit_date": "2026-07-02", "shop_name": "麥當勞 (樂意居) McDonald's\nMcDonald's (Delight Court)", "phone": "852-27697811", "address": "九龍土瓜灣馬頭圍道418號樂意居地下一號舖及一樓全層", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721512369", "submit_date": "2026-07-02", "shop_name": "麥當勞 (欽州街) McDonald's\nMcDonald's (Yen Chow)", "phone": "852-27284222", "address": "九龍深水埗欽州街78-86號地下及閣樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721512370", "submit_date": "2026-07-02", "shop_name": "麥當勞 (九龍站) McDonald's\nMcDonald's (Kowloon Station)", "phone": "852-23750161", "address": "九龍機鐵九龍站到境大堂12號B舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721512371", "submit_date": "2026-07-03", "shop_name": "麥當勞(康城)McDonalds", "phone": "852-27951806", "address": "新界西貢將軍澳康城路1號The LOHAS 康城4樓431A號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721515295", "submit_date": "2026-07-07", "shop_name": "麥當勞(翔東)McDonalds", "phone": "852-26962918", "address": "香港離島大嶼山東涌 翔東邨翔東@潮薈 地下02號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "721515338", "submit_date": "2026-07-06", "shop_name": "TheLasagnaFactory上環意式經典千層麵之家意大利最傳統的美味", "phone": "852-98421883", "address": "上環荷李活道208號地鋪", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721515369", "submit_date": "2026-07-06", "shop_name": "麥當勞(真善美)McDonalds", "phone": "852-27121185", "address": "九龍土瓜灣真善美邨富寧街5, 7, 9號地舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721515370", "submit_date": "2026-07-03", "shop_name": "麥當勞(麗港城)McDonalds", "phone": "852-23463285", "address": "九龍觀塘麗港城麗港城商場地下6-9號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721515371", "submit_date": "2026-07-02", "shop_name": "麥當勞 (創紀之城) McDonald's\nMcDonald's (Millennium City)", "phone": "852-22671638", "address": "\n九龍觀塘觀塘道388號創紀之城地下1A單位", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721515372", "submit_date": "2026-07-02", "shop_name": "麥當勞 (新都會廣場II) McDonald's\nMcDonald's (Metroplaza II)", "phone": "852-24224134", "address": "新界葵芳興芳路223號新都會廣場5樓541號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721515373", "submit_date": "2026-07-07", "shop_name": "麥當勞(荃灣中心)McDonalds", "phone": "852-24055857", "address": "新界荃灣荃景圍94-98號荃灣中心第二期地下6號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721516382", "submit_date": "2026-07-02", "shop_name": "MINYOUNG", "phone": "852-56475009", "address": "SHOP B (PORTION) OF 24-49 ON PORTION OF G/F OF THE PODIUM OF BLOCK 1,CITY GARDEN, NO.233 ELECTRIC ROAD, NORTH POINT, HONG KONG", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 1, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*1"}, {"shop_id": "721517367", "submit_date": "2026-07-03", "shop_name": "麥當勞(沙咀道)McDonalds", "phone": "852-24122134", "address": "新界荃灣沙咀道270-276號廣發大廈一樓及地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721517368", "submit_date": "2026-07-02", "shop_name": "麥當勞 (富昌) McDonald's", "phone": "852-21424961", "address": "九龍深水埗南昌薈1樓128至129號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721517369", "submit_date": "2026-07-06", "shop_name": "麥當勞(宏開道)McDonalds", "phone": "852-27117892", "address": "九龍九龍灣宏開道8號其士商業中心地下1及2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721518370", "submit_date": "2026-07-07", "shop_name": "鯛魚魚湯烏冬專門店", "phone": "852-23809688", "address": "Shop no 218, 2/F, Tai Yau Plaza, Of Tai Yau Building, No.181 Johnson Road, Wanchai", "materials": {"大膠袋": 5, "小膠袋": 5, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*5, 小膠袋*5"}, {"shop_id": "721520320", "submit_date": "2026-07-03", "shop_name": "ItalianCorner東涌即製手工意粉超值全日套餐仲有超正Tiramisu", "phone": "852-64055606", "address": "東涌達東路東薈城7樓704號舖食代館8及8A號檔", "materials": {"大膠袋": 2, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2, 紙袋*1"}, {"shop_id": "721520365", "submit_date": "2026-07-06", "shop_name": "麥當勞(青山道)McDonalds", "phone": "852-27088169", "address": "九龍深水埗青山道212-214號瑞麗閣地下及一樓", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721520366", "submit_date": "2026-07-02", "shop_name": "麥當勞 (屯門時代廣場 II) McDonald's", "phone": "852-24413628", "address": "新界屯門屯合街2號時代廣場南翼第三層13及14號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721520367", "submit_date": "2026-07-03", "shop_name": "麥當勞(南豐)McDonalds", "phone": "852-24111531", "address": "新界荃灣青山道264-298號南豐中心中三樓301號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721522291", "submit_date": "2026-07-02", "shop_name": "McDonald's (Trend Plaza II)", "phone": "852-51801980", "address": "忠孝街60愛民邨愛民街市地下W32號舖", "materials": {"大膠袋": 4, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*4"}, {"shop_id": "721522346", "submit_date": "2026-07-06", "shop_name": "魚雷沾麵", "phone": "852-37533699", "address": "灣仔駱克道389號地下", "materials": {"大膠袋": 1, "小膠袋": 1, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*1, 小膠袋*1"}, {"shop_id": "721523396", "submit_date": "2026-07-03", "shop_name": "廈香記", "phone": "852-65057714", "address": "九龍觀塘偉業街221號美德工業大廈F座10樓B室", "materials": {"大膠袋": 4, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*4"}, {"shop_id": "721524342", "submit_date": "2026-07-07", "shop_name": "牛丼新造（中環）", "phone": "852-28051108", "address": "中環威靈頓街112-114號新威大廈地下C號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721524375", "submit_date": "2026-07-06", "shop_name": "麥當勞(安定III)McDonalds", "phone": "852-36151302", "address": "新界屯門屯門鄉事會路2A號安定邨愛定商場A區A-128 號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 8, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*8"}, {"shop_id": "721525385", "submit_date": "2026-07-07", "shop_name": "麥當勞(將軍澳廣場)McDonalds", "phone": "852-26741217", "address": "新界將軍澳唐德街1號將軍澳廣場商業部份二樓2-018-020號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721525386", "submit_date": "2026-07-07", "shop_name": "麥當勞(MegaBoxII)McDonalds", "phone": "852-23590412", "address": "九龍九龍灣宏照道38號企業廣場五期MegaBox L2 34號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721526348", "submit_date": "2026-07-02", "shop_name": "有營站HealthGoal每月不同套餐大大份新鮮蔬菜", "phone": "852-69948988", "address": "PORT. A6, 1/F 148 WING LOK ST, SHEUNG WAN", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721527297", "submit_date": "2026-07-03", "shop_name": "小休亭新店", "phone": "852-66022155", "address": "新界沙田大圍第187丈量约份第597號地段上口村地下105號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 1, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "4號無紡布袋*1"}, {"shop_id": "721527333", "submit_date": "2026-07-02", "shop_name": "炸物公社(新店開業全場買一送一)", "phone": "852-52854555", "address": "香港德輔道西103號樂基商業中心1樓，18號", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 2, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*2"}, {"shop_id": "721527353", "submit_date": "2026-07-02", "shop_name": "Puradak SYP", "phone": "852-59666202", "address": "上環德輔道西103號樂基商業中心1樓Kitchen 5", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721527368", "submit_date": "2026-07-03", "shop_name": "麥當勞(海港城)McDonalds", "phone": "852-37047246", "address": "港威大廈四階4002號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721527369", "submit_date": "2026-07-06", "shop_name": "麥當勞(新都城)McDonalds", "phone": "852-31945176", "address": "新界將軍澳欣景路八號新都城中心二期商場一樓1017號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721528317", "submit_date": "2026-07-06", "shop_name": "添好運點心專門店(Mkiki)", "phone": "852-23662802", "address": "九龍新蒲崗太子道東638號MIKIKI地下G11號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721530328", "submit_date": "2026-07-07", "shop_name": "新開張8折試食磯水產觀塘必試刺身丼飯專門店", "phone": "852-55002591", "address": "九龍觀塘海濱道133號萬兆豐中心地下3號鋪", "materials": {"大膠袋": 0, "小膠袋": 1, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*1"}, {"shop_id": "721530372", "submit_date": "2026-07-06", "shop_name": "肉餅專家一個養活兩代人的肉餅飯（新店開業糖水免費送）", "phone": "852-98852845", "address": "九龍九龍灣臨興街32號美羅中心一期地下G室5號铺2號廚房", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 2, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*2"}, {"shop_id": "721531310", "submit_date": "2026-07-03", "shop_name": "一碗賭上廚師生涯的炒飯（荔枝角店）", "phone": "852-55416531", "address": "九龍長沙灣長裕街2號嘉圖工廠大廈1樓D室11號廚房", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 2, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "3號無紡布袋*2"}, {"shop_id": "721531373", "submit_date": "2026-07-02", "shop_name": "麥當勞 (幸福商場) McDonald's", "phone": "852-27583292", "address": "九龍長沙灣幸祥街8號幸福邨幸福商場1樓111舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 6, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*6"}, {"shop_id": "721532396", "submit_date": "2026-07-06", "shop_name": "麥當勞(何文田廣場)McDonalds", "phone": "852-22420462", "address": "九龍何文田廣場3樓319號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721534383", "submit_date": "2026-07-06", "shop_name": "麥當勞(愉翠)McDonalds", "phone": "852-22780155", "address": "新界沙田小瀝源愉翠苑愉翠商場1樓101號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721534384", "submit_date": "2026-07-06", "shop_name": "麥當勞(大興)McDonalds", "phone": "852-22346011", "address": "新界屯門大興街1號大興商場地下L101號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721534385", "submit_date": "2026-07-03", "shop_name": "麥當勞(海之戀商場)McDonalds", "phone": "852-24675221", "address": "新界荃灣大河道100號海之戀商場2樓2029號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 5, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*5"}, {"shop_id": "721536291", "submit_date": "2026-07-06", "shop_name": "東煌燒味人氣新店明爐燒味", "phone": "852-68963628", "address": "香港上環皇后大道中上環市政大廈 地下sm1號店", "materials": {"大膠袋": 0, "小膠袋": 2, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*2"}, {"shop_id": "721536377", "submit_date": "2026-07-03", "shop_name": "麥當勞(藍田)McDonalds", "phone": "852-23795337", "address": "九龍茶果嶺東NKIL6046匯景花園26號1號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}, {"shop_id": "721537356", "submit_date": "2026-07-02", "shop_name": "沁喜", "phone": "852-64335293", "address": "崇潔街", "materials": {"大膠袋": 0, "小膠袋": 1, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*1"}, {"shop_id": "721537376", "submit_date": "2026-07-06", "shop_name": "麥當勞(田灣)McDonalds", "phone": "852-25802816", "address": "香港香港仔石排灣道81號兆暉大廈地下1及2號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721538394", "submit_date": "2026-07-03", "shop_name": "麥當勞(信德中心)McDonalds", "phone": "852-29758367", "address": "香港干諾道中200號信德中心二樓267號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 4, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*4"}, {"shop_id": "721538395", "submit_date": "2026-07-02", "shop_name": "麥當勞 (將軍澳中心II) McDonald's\nMcDonald's (Park Central II)\nID 721538395\n · KA團隊\n 門市編", "phone": "852-27870201", "address": "新界西貢將軍澳唐德街9號將軍澳中心地下G33號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721539350", "submit_date": "2026-07-03", "shop_name": "Drool(中環店)(夏日熱辣辣食雪糕解暑)", "phone": "852-63103908", "address": "香港中環伊利近街懷遠樓地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 1, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "單杯無紡布袋*1"}, {"shop_id": "721539366", "submit_date": "2026-07-06", "shop_name": "麥當勞(黃埔)McDonalds", "phone": "852-27742777", "address": "九龍黃埔花園第11期聚寶坊地下G7A舖及地庫1樓1B12至14舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 7, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*7"}, {"shop_id": "721539368", "submit_date": "2026-07-02", "shop_name": "麥當勞 (華富) McDonald's\nMcDonald's (Wah Fu)", "phone": "\n852-25518135", "address": "香港華富(I)邨華富(I)商場1A舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 2, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*2"}, {"shop_id": "721540366", "submit_date": "2026-07-03", "shop_name": "麥當勞(大埔道)McDonalds", "phone": "852-27884876", "address": "九龍大埔道132-134號康寶大廈地下", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 1, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*1"}, {"shop_id": "721540368", "submit_date": "2026-07-03", "shop_name": "晉利新店早餐多選擇街坊小菜美食沙漠嘅綠洲", "phone": "852-61786265", "address": "香港小西灣小西灣道28號藍灣廣場地下12及15號鋪", "materials": {"大膠袋": 5, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*5"}, {"shop_id": "721540375", "submit_date": "2026-07-03", "shop_name": "Kitchen99(港式冰室優惠客飯)", "phone": "852-96784048", "address": "新界元朗安興街59-67號安泰樓地下5號舖", "materials": {"大膠袋": 2, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "大膠袋*2"}, {"shop_id": "721542311", "submit_date": "2026-07-06", "shop_name": "AnNamBanhMi越南傳統法包（越式咖啡香茅豬肉撈檬惹味串燒斑斕糕）", "phone": "852-97313278", "address": "Shop No.B3B1&B3C,G/F Smiling Plaza 155", "materials": {"大膠袋": 0, "小膠袋": 3, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 0, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "小膠袋*3"}, {"shop_id": "721542374", "submit_date": "2026-07-06", "shop_name": "麥當勞(水泉澳)McDonalds", "phone": "852-27902526", "address": "新界沙田水泉澳邨水泉澳廣場G12號舖", "materials": {"大膠袋": 0, "小膠袋": 0, "單杯無紡布袋": 0, "雙杯無紡布袋": 0, "3號無紡布袋": 0, "4號無紡布袋": 0, "紙袋": 3, "紙漿杯2托": 0, "紙漿杯托-4托": 0, "飲品封口紙": 0, "雙杯裝紙袋": 0, "單杯裝紙袋": 0}, "remark": "紙袋*3"}];
+        function handleFile(file) {
+            if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+                showToast('請上傳 Excel 文件（.xlsx 或 .xls）');
+                return;
+            }
+            
+            fileName.textContent = '已選擇：' + file.name;
+            dropZone.classList.add('has-file');
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    if (rows.length < 2) {
+                        showToast('文件為空或格式不正確');
+                        return;
+                    }
+                    
+                    const header = rows[0];
+                    let companyIdx = -1;
+                    let trackingIdx = -1;
+                    
+                    header.forEach((col, idx) => {
+                        if (col && col.toString().includes('收件方公司')) companyIdx = idx;
+                        if (col && col.toString().includes('順豐運單號')) trackingIdx = idx;
+                    });
+                    
+                    if (companyIdx === -1 || trackingIdx === -1) {
+                        showToast('未找到「收件方公司」或「順豐運單號」列，請檢查文件格式');
+                        return;
+                    }
+                    
+                    mapping = {};
+                    let count = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        const row = rows[i];
+                        if (row[companyIdx] && row[trackingIdx]) {
+                            const shopId = row[companyIdx].toString().trim();
+                            const tracking = row[trackingIdx].toString().trim();
+                            if (!mapping[shopId]) mapping[shopId] = [];
+                            if (!mapping[shopId].includes(tracking)) {
+                                mapping[shopId].push(tracking);
+                                count++;
+                            }
+                        }
+                    }
+                    
+                    showToast(`成功載入 ${Object.keys(mapping).length} 個 ShopID 映射關係（${count} 條單號）`);
+                } catch (err) {
+                    showToast('解析文件失敗：' + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
-function buildRemark(materials) {
-  const parts = [];
-  for (const col of MATERIAL_COLS) {
-    const qty = materials[col.name] || 0;
-    if (qty > 0) parts.push(col.name + '*' + qty);
-  }
-  return parts.join(', ');
-}
+        function lookup() {
+            if (Object.keys(mapping).length === 0) {
+                showToast('請先上傳已攬收 Excel 文件');
+                return;
+            }
+            
+            const lines = inputArea.value.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length === 0) {
+                showToast('請輸入 ShopID');
+                return;
+            }
+            
+            let found = 0;
+            let notFound = 0;
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+            
+            lines.forEach(shopId => {
+                const trackings = mapping[shopId];
+                const tr = document.createElement('tr');
+                
+                if (trackings && trackings.length > 0) {
+                    const tagsHtml = trackings.map(t => 
+                        `<span class="tracking-tag">${escapeHtml(t)}<span class="copy-icon" onclick="copyText('${escapeHtml(t).replace(/'/g, "\\'")}', this)" title="複製">📋</span></span>`
+                    ).join('');
+                    
+                    tr.innerHTML = `
+                        <td>${escapeHtml(shopId)}</td>
+                        <td><div class="tracking-list">${tagsHtml}</div></td>
+                        <td class="action-cell"><button class="copy-row-btn" onclick="copyRowTracking(this, '${escapeHtml(trackings.join('、')).replace(/'/g, "\\'")}')">複製</button></td>
+                    `;
+                    found++;
+                } else {
+                    tr.innerHTML = `
+                        <td>${escapeHtml(shopId)}</td>
+                        <td><span class="empty-cell" id="empty-${escapeHtml(shopId)}">0</span></td>
+                        <td class="action-cell"><button class="copy-row-btn" onclick="copyText('0', this)">複製</button></td>
+                    `;
+                    notFound++;
+                }
+                
+                tbody.appendChild(tr);
+            });
+            
+            document.getElementById('stats').style.display = 'flex';
+            document.getElementById('statTotal').textContent = lines.length;
+            document.getElementById('statFound').textContent = found;
+            document.getElementById('statNotFound').textContent = notFound;
+            
+            showToast(`查詢完成：${found} 個匹配，${notFound} 個未找到`);
+        }
 
-function calcAmount(materials) {
-  let total = 0;
-  for (const col of MATERIAL_COLS) {
-    total += (materials[col.name] || 0) * col.price;
-  }
-  return total;
-}
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-function mergeData(rows) {
-  const map = {};
-  for (const row of rows) {
-    const sid = String(row['商家ID'] || row['shop_id'] || '').trim();
-    if (!sid) continue;
-    if (!map[sid]) {
-      map[sid] = {
-        shop_id: sid,
-        submit_date: row['提交日期'] || row['submit_date'] || '',
-        shop_name: row['商家名稱'] || row['shop_name'] || '',
-        phone: row['收貨電話'] || row['phone'] || '',
-        address: row['收貨地址'] || row['address'] || '',
-        materials: {}
-      };
-      for (const col of MATERIAL_COLS) map[sid].materials[col.name] = 0;
-    }
-    for (const col of MATERIAL_COLS) {
-      const key = col.name;
-      map[sid].materials[key] += parseInt(row[key] || 0) || 0;
-    }
-  }
-  const result = [];
-  for (const sid in map) {
-    const d = map[sid];
-    d.remark = buildRemark(d.materials);
-    d.amount = calcAmount(d.materials);
-    result.push(d);
-  }
-  result.sort((a, b) => String(a.shop_id).localeCompare(String(b.shop_id), undefined, {numeric:true}));
-  return result;
-}
+        function copyText(text, iconEl) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已複製：' + text);
+                iconEl.textContent = '✓';
+                setTimeout(() => iconEl.textContent = '📋', 1000);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已複製：' + text);
+            });
+        }
 
-function renderTable() {
-  if (!mergedData.length) {
-    document.getElementById('tableWrap').innerHTML = '<div class="empty-msg">無數據</div>';
-    return;
-  }
-  let html = '<table><thead><tr>';
-  html += '<th>提交日期</th><th>商家ID</th><th>商家名稱</th><th>收貨電話</th><th>收貨地址</th>';
-  for (const col of MATERIAL_COLS) html += '<th>' + col.name + '</th>';
-  html += '<th>調賬費用</th><th>備註</th>';
-  html += '</tr></thead><tbody>';
-  for (const row of mergedData) {
-    const isDup = row._wasMerged;
-    html += '<tr' + (isDup ? ' class="merged-row"' : '') + '>';
-    html += '<td>' + esc(row.submit_date) + '</td>';
-    html += '<td class="shop-id">' + esc(row.shop_id) + '</td>';
-    html += '<td class="shop-name" title="' + esc(row.shop_name) + '">' + esc(row.shop_name) + '</td>';
-    html += '<td>' + esc(row.phone) + '</td>';
-    html += '<td class="address" title="' + esc(row.address) + '">' + esc(row.address) + '</td>';
-    for (const col of MATERIAL_COLS) {
-      const qty = row.materials[col.name] || 0;
-      html += '<td class="' + (qty > 0 ? 'qty-nonzero' : 'qty-zero') + '">' + qty + '</td>';
-    }
-    html += '<td class="amount">' + row.amount + '</td>';
-    html += '<td class="remark">' + esc(row.remark) + '</td>';
-    html += '</tr>';
-  }
-  html += '</tbody></table>';
-  document.getElementById('tableWrap').innerHTML = html;
-}
+        function copyRowTracking(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                btn.textContent = '已複製';
+                btn.classList.add('copied');
+                showToast('已複製該行所有單號');
+                setTimeout(() => {
+                    btn.textContent = '複製';
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('已複製該行所有單號');
+            });
+        }
 
-function esc(text) {
-  if (text == null) return '';
-  return String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+        function copyAllTracking() {
+            const rows = document.querySelectorAll('#resultsBody tr');
+            const allLines = [];
+            
+            rows.forEach(row => {
+                const tags = row.querySelectorAll('.tracking-tag');
+                if (tags.length > 0) {
+                    const texts = [];
+                    tags.forEach(tag => {
+                        const text = tag.childNodes[0].textContent.trim();
+                        if (text) texts.push(text);
+                    });
+                    allLines.push(texts.join('、'));
+                } else {
+                    const emptyCell = row.querySelector('.empty-cell');
+                    if (emptyCell) {
+                        allLines.push('0');
+                    }
+                }
+            });
+            
+            if (allLines.length === 0) {
+                showToast('沒有單號可複製');
+                return;
+            }
+            
+            const text = allLines.join('\n');
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`已複製 ${allLines.length} 行`);
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast(`已複製 ${allLines.length} 行`);
+            });
+        }
 
-function updateStats() {
-  document.getElementById('statRaw').textContent = rawRowCount;
-  document.getElementById('statMerged').textContent = mergedData.length;
-  document.getElementById('statDup').textContent = dupCount;
-  const total = mergedData.reduce((s, r) => s + r.amount, 0);
-  document.getElementById('statTotal').textContent = total.toFixed(0);
-}
+        function clearAll() {
+            inputArea.value = '';
+            document.getElementById('resultsBody').innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align:center;color:#999;padding:40px;">
+                        請上傳文件並輸入 ShopID 後點擊查詢
+                    </td>
+                </tr>
+            `;
+            document.getElementById('stats').style.display = 'none';
+            showToast('已清空');
+        }
 
-function filterTable() {
-  const q = document.getElementById('searchBox').value.toLowerCase().trim();
-  const rows = document.querySelectorAll('#tableWrap tbody tr');
-  rows.forEach(tr => {
-    if (!q) { tr.style.display = ''; return; }
-    const text = tr.textContent.toLowerCase();
-    tr.style.display = text.includes(q) ? '' : 'none';
-  });
-}
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
 
-const dragArea = document.getElementById('dragArea');
-const fileInput = document.getElementById('fileInput');
-
-dragArea.addEventListener('click', () => fileInput.click());
-dragArea.addEventListener('dragover', e => { e.preventDefault(); dragArea.classList.add('dragover'); });
-dragArea.addEventListener('dragleave', () => dragArea.classList.remove('dragover'));
-dragArea.addEventListener('drop', e => {
-  e.preventDefault();
-  dragArea.classList.remove('dragover');
-  if (e.dataTransfer.files.length) {
-    fileInput.files = e.dataTransfer.files;
-    dragArea.querySelector('p').textContent = '已選擇: ' + e.dataTransfer.files[0].name;
-  }
-});
-fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) dragArea.querySelector('p').textContent = '已選擇: ' + fileInput.files[0].name;
-});
-
-function processFile() {
-  if (!fileInput.files.length) { alert('請先選擇文件'); return; }
-  const file = fileInput.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = new Uint8Array(e.target.result);
-    const wb = XLSX.read(data, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-    if (json.length < 2) { alert('文件內容為空'); return; }
-    const headers = json[0].map(h => String(h).trim());
-    rawRowCount = json.length - 1;
-    rawData = [];
-    for (let i = 1; i < json.length; i++) {
-      const obj = {};
-      for (let j = 0; j < headers.length; j++) obj[headers[j]] = json[i][j];
-      rawData.push(obj);
-    }
-    const idCounts = {};
-    rawData.forEach(r => {
-      const sid = String(r['商家ID'] || '').trim();
-      if (sid) idCounts[sid] = (idCounts[sid] || 0) + 1;
-    });
-    dupCount = Object.values(idCounts).filter(c => c > 1).length;
-
-    mergedData = mergeData(rawData);
-    for (const r of mergedData) {
-      r._wasMerged = idCounts[r.shop_id] > 1;
-    }
-    renderTable();
-    updateStats();
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-function exportExcel() {
-  if (!mergedData.length) { alert('無數據可導出'); return; }
-  const exportData = mergedData.map((r, ri) => {
-    const excelRow = ri + 2; // data starts at row 2
-    const obj = {
-      '提交日期': r.submit_date,
-      '商家ID': r.shop_id,
-      '商家名稱': r.shop_name,
-      '收貨電話': r.phone,
-      '收貨地址': r.address,
-    };
-    for (const col of MATERIAL_COLS) obj[col.name] = r.materials[col.name] || 0;
-    // Build formula string for amount: =F2*29+G2*22+...
-    const formulaParts = [];
-    for (let idx = 0; idx < MATERIAL_COLS.length; idx++) {
-      const col = MATERIAL_COLS[idx];
-      const excelCol = String.fromCharCode(70 + idx); // F=70, G=71, ...
-      formulaParts.push(excelCol + excelRow + '*' + col.price);
-    }
-    obj['調賬費用'] = '=' + formulaParts.join('+');
-    obj['備註'] = r.remark;
-    return obj;
-  });
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, '合併後數據');
-  XLSX.writeFile(wb, '合併後-物料調賬底表7.1-7.7.xlsx');
-}
-
-function exportCSV() {
-  if (!mergedData.length) { alert('無數據可導出'); return; }
-  const exportData = mergedData.map(r => {
-    const obj = {
-      '提交日期': r.submit_date,
-      '商家ID': r.shop_id,
-      '商家名稱': r.shop_name,
-      '收貨電話': r.phone,
-      '收貨地址': r.address,
-    };
-    for (const col of MATERIAL_COLS) obj[col.name] = r.materials[col.name] || 0;
-    obj['調賬費用'] = r.amount;
-    obj['備註'] = r.remark;
-    return obj;
-  });
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const csv = XLSX.utils.sheet_to_csv(ws);
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '合併後-物料調賬底表7.1-7.7.csv';
-  link.click();
-}
-
-(function init() {
-  if (PRELOADED && PRELOADED.length) {
-    mergedData = PRELOADED.map(r => ({
-      shop_id: r.shop_id,
-      submit_date: r.submit_date,
-      shop_name: r.shop_name,
-      phone: r.phone,
-      address: r.address,
-      materials: r.materials,
-      remark: r.remark,
-      amount: calcAmount(r.materials),
-      _wasMerged: false
-    }));
-    rawRowCount = 344;
-    dupCount = 28;
-    renderTable();
-    updateStats();
-    document.getElementById('dragArea').querySelector('p').textContent = '已預載入 7.1-7.7 調賬數據（344行→316行）。也可上傳新文件重新處理。';
-  }
-})();
-</script>
-
+        // 支持 Ctrl+Enter 快速查询
+        inputArea.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') lookup();
+        });
+    </script>
 </body>
 </html>
